@@ -1,8 +1,8 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
-import { hashPassword } from '../common';
+import { comparePasswords, hashPassword } from '../common';
 import { database } from '../database';
 import { User, UserScore } from '../types/user';
-
+const bcrypt = require('bcrypt');
 export const create = async (user: User, callback: Function) => {
     const query =
         'INSERT INTO users (name, password, image, last_activity) VALUES (?, ?, ?, ?)';
@@ -39,28 +39,34 @@ export const createScore = (userScore: UserScore, callback: Function) => {
     );
 };
 
-export const connect = (user: User, callback: Function) => {
-    const query = 'SELECT * FROM users WHERE password = ?';
-
-    database.query(query, [user.password], (err, result) => {
+export const connect = async (
+    name: string,
+    password: string,
+    callback: Function
+) => {
+    const query = 'SELECT * FROM users WHERE name = ?';
+    console.log('connect: ' + name + password);
+    database.query(query, [name], async (err, result) => {
         if (err) {
             callback(err);
         } else {
             const rows = <RowDataPacket[]>result;
             const users: User[] = [];
 
-            rows.forEach((row) => {
-                const user: User = {
-                    id: row.id,
-                    name: row.name,
-                    password: row.password,
-                    image: row.image,
-                    level: row.level,
-                    last_activity: row.last_activity,
-                    created_at: row.created_at
-                };
-                users.push(user);
-            });
+            for (let row of rows) {
+                if (await comparePasswords(name, password, row.password)) {
+                    const user: User = {
+                        id: row.id,
+                        name: row.name,
+                        password: row.password,
+                        image: row.image,
+                        level: row.level,
+                        last_activity: row.last_activity,
+                        created_at: row.created_at
+                    };
+                    users.push(user);
+                }
+            }
             callback(null, users);
         }
     });

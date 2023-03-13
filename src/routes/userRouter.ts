@@ -33,13 +33,14 @@ userRouter.post('/score', async (req: Request, res: Response) => {
     });
 });
 
-userRouter.post('/connect', async (req: Request, res: Response) => {
-    const user: User = req.body;
-    userModel.connect(user, (err: Error, users: User[]) => {
+userRouter.post('/connect/', async (req: Request, res: Response) => {
+    const name = req.body.name;
+    const password = req.body.password;
+    userModel.connect(name, password, (err: Error, users: User[]) => {
         if (err || users.length === 0) {
             return res
                 .status(500)
-                .json({ error: err.message, message: 'User not found' });
+                .json({ message: 'User not found', err: err.message });
         }
         res.status(200).json({ users: users });
     });
