@@ -23,13 +23,25 @@ userRouter.post('/', async (req: Request, res: Response) => {
     });
 });
 
-userRouter.post('/score/', async (req: Request, res: Response) => {
+userRouter.post('/score', async (req: Request, res: Response) => {
     const userScore: UserScore = req.body;
     userModel.createScore(userScore, (err: Error, userId: number) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
         res.status(200).json({ userId: userId });
+    });
+});
+
+userRouter.post('/connect', async (req: Request, res: Response) => {
+    const user: User = req.body;
+    userModel.connect(user, (err: Error, users: User[]) => {
+        if (err || users.length === 0) {
+            return res
+                .status(500)
+                .json({ error: err.message, message: 'User not found' });
+        }
+        res.status(200).json({ users: users });
     });
 });
 
@@ -43,7 +55,7 @@ userRouter.put('/', async (req: Request, res: Response) => {
     });
 });
 
-userRouter.put('/score/', async (req: Request, res: Response) => {
+userRouter.put('/score', async (req: Request, res: Response) => {
     const userScore: UserScore = req.body;
 
     userModel.updateScore(userScore, (err: Error) => {

@@ -1,11 +1,13 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
+import { hashPassword } from '../common';
 import { database } from '../database';
 import { User, UserScore } from '../types/user';
 
-export const create = (user: User, callback: Function) => {
+export const create = async (user: User, callback: Function) => {
     const query =
         'INSERT INTO users (name, password, image, last_activity) VALUES (?, ?, ?, ?)';
-
+    const hashedPassword = await hashPassword(user.name, user.password);
+    user.password = hashedPassword;
     database.query(
         query,
         [user.name, user.password, user.image, user.last_activity],
@@ -35,6 +37,33 @@ export const createScore = (userScore: UserScore, callback: Function) => {
             }
         }
     );
+};
+
+export const connect = (user: User, callback: Function) => {
+    const query = 'SELECT * FROM users WHERE password = ?';
+
+    database.query(query, [user.password], (err, result) => {
+        if (err) {
+            callback(err);
+        } else {
+            const rows = <RowDataPacket[]>result;
+            const users: User[] = [];
+
+            rows.forEach((row) => {
+                const user: User = {
+                    id: row.id,
+                    name: row.name,
+                    password: row.password,
+                    image: row.image,
+                    level: row.level,
+                    last_activity: row.last_activity,
+                    created_at: row.created_at
+                };
+                users.push(user);
+            });
+            callback(null, users);
+        }
+    });
 };
 
 export const findAll = (callback: Function) => {
