@@ -2,12 +2,10 @@
     "compilerOptions": {
         "target": "es6",
         "module": "commonjs",
-        "outDir": "./dist",
+        "outDir": "dist",
         "strict": true,
         "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
-    },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules"]
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
+    }
 }
