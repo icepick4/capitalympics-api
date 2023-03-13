@@ -13,15 +13,16 @@ countryRouter.get('/', async (req: Request, res: Response) => {
     });
 });
 
-countryRouter.post('/', async (req: Request, res: Response) => {
-    const country: Country = req.body;
-    countryModel.create(country, (err: Error, countryId: number) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        res.status(200).json({ countryId: countryId });
-    });
-});
+// Only when need to initialize the database
+// countryRouter.post('/', async (req: Request, res: Response) => {
+//     const country: Country = req.body;
+//     countryModel.create(country, (err: Error, countryId: number) => {
+//         if (err) {
+//             return res.status(500).json({ error: err.message });
+//         }
+//         res.status(200).json({ countryId: countryId });
+//     });
+// });
 
 countryRouter.get('/:code', async (req: Request, res: Response) => {
     countryModel.findByCode(req.params.code, (err: Error, country: Country) => {

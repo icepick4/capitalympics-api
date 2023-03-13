@@ -45,7 +45,6 @@ export const connect = async (
     callback: Function
 ) => {
     const query = 'SELECT * FROM users WHERE name = ?';
-    console.log('connect: ' + name + password);
     database.query(query, [name], async (err, result) => {
         if (err) {
             callback(err);
