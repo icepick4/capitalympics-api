@@ -6,15 +6,21 @@ export const tokenMiddleware = (
     res: Response,
     next: NextFunction
 ) => {
-    const token = req.headers.authorization;
+    const auth = req.headers.authorization;
+    const token = auth && auth.split(' ')[1];
+    const id = req.params.id;
 
+    if (!id) {
+        return res.status(401).send({ message: 'User ID missing' });
+    }
     if (!token) {
         return res.status(401).send({ message: 'Token missing' });
     }
-
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.body.user = decoded;
+        const decoded = jwt.verify(token, process.env.JWT_TOKEN);
+        if (decoded.id != id) {
+            return res.status(403).send({ message: 'Forbidden' });
+        }
         next();
     } catch (err) {
         return res.status(401).send({ message: 'Invalid token' });
@@ -35,6 +41,8 @@ export const userTypeMiddleware = (
             !('password' in user)
         ) {
             return res.status(400).send('Invalid user object for POST /users');
+        } else {
+            return next();
         }
     }
     if (
@@ -69,6 +77,8 @@ export const userScoreTypeMiddleware = (
             return res
                 .status(400)
                 .send('Invalid user object for POST /users/scores');
+        } else {
+            return next();
         }
     }
     if (

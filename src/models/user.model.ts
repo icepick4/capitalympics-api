@@ -2,7 +2,6 @@ import { OkPacket, RowDataPacket } from 'mysql2';
 import { comparePasswords, hashPassword } from '../common';
 import { database } from '../database';
 import { User, UserScore } from '../types/user';
-const bcrypt = require('bcrypt');
 export const create = async (user: User, callback: Function) => {
     const query =
         'INSERT INTO users (name, password, image, last_activity) VALUES (?, ?, ?, ?)';
@@ -50,8 +49,6 @@ export const connect = async (
             callback(err);
         } else {
             const rows = <RowDataPacket[]>result;
-            const users: User[] = [];
-
             for (let row of rows) {
                 if (await comparePasswords(name, password, row.password)) {
                     const user: User = {
@@ -63,10 +60,10 @@ export const connect = async (
                         last_activity: row.last_activity,
                         created_at: row.created_at
                     };
-                    users.push(user);
+                    return callback(null, user);
                 }
             }
-            callback(null, users);
+            callback(null, null);
         }
     });
 };
@@ -98,7 +95,33 @@ export const findAll = (callback: Function) => {
     });
 };
 
-export const update = (user: User, callback: Function) => {
+export const findOne = (id: number, callback: Function) => {
+    const query = 'SELECT * FROM users WHERE id = ?';
+
+    database.query(
+        query,
+        [id],
+        (err, result: RowDataPacket[] | OkPacket | RowDataPacket[][]) => {
+            if (err) {
+                callback(err);
+            } else {
+                const rows = <RowDataPacket[]>result;
+                const user: User = {
+                    id: rows[0].id,
+                    name: rows[0].name,
+                    password: rows[0].password,
+                    image: rows[0].image,
+                    level: rows[0].level,
+                    last_activity: rows[0].last_activity,
+                    created_at: rows[0].created_at
+                };
+                callback(null, user);
+            }
+        }
+    );
+};
+
+export const update = (user: User, userId: number, callback: Function) => {
     const query =
         'UPDATE users SET name = ?, password = ?, image = ?, level = ?, last_activity = ? WHERE id = ?';
 
@@ -110,7 +133,7 @@ export const update = (user: User, callback: Function) => {
             user.image,
             user.level,
             user.last_activity,
-            user.id
+            userId
         ],
         (err, result) => {
             if (err) {

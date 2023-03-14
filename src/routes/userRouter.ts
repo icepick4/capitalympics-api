@@ -18,6 +18,17 @@ userRouter.get('/', tokenMiddleware, async (req: Request, res: Response) => {
     });
 });
 
+userRouter.get('/:id', tokenMiddleware, async (req: Request, res: Response) => {
+    const id: number = parseInt(req.params.id);
+    userModel.findOne(id, (err: Error, user: User) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        const { id: _id, password: _password, ...userWithoutPassword } = user;
+        res.status(200).json({ user: userWithoutPassword });
+    });
+});
+
 userRouter.post(
     '/',
     userTypeMiddleware,
@@ -46,39 +57,38 @@ userRouter.post(
     }
 );
 
-userRouter.post(
-    '/connect/',
-    tokenMiddleware,
-    async (req: Request, res: Response) => {
-        const name = req.body.name;
-        const password = req.body.password;
-        const device = req.body.device;
-        const screenSize = req.body.screenSize;
-        userModel.connect(name, password, (err: Error, users: User[]) => {
-            if (err || users.length === 0 || users.length > 1) {
-                return res
-                    .status(500)
-                    .json({ message: 'User not found', err: err.message });
-            }
-            const token = jwt.sign(
-                {
-                    user: users[0].id,
-                    device: device,
-                    screenSize: screenSize
-                },
-                process.env.JWT_SECRET
-            );
-            res.status(200).json({ token, user: users[0] });
-        });
-    }
-);
+userRouter.post('/connect/', async (req: Request, res: Response) => {
+    const name = req.body.name;
+    const password = req.body.password;
+    const device = req.body.device;
+    const screenSize = req.body.screenSize;
+    userModel.connect(name, password, (err: Error, user: User | null) => {
+        if (err || !user) {
+            return res
+                .status(500)
+                .json({ message: 'User not found', error: err });
+        }
+        const token = jwt.sign(
+            {
+                id: user.id,
+                name: user.name,
+                level: user.level,
+                device: device,
+                screenSize: screenSize
+            },
+            process.env.JWT_TOKEN
+        );
+        res.status(200).json({ token });
+    });
+});
 
 userRouter.put(
     '/',
     [userTypeMiddleware, tokenMiddleware],
     async (req: Request, res: Response) => {
         const user: User = req.body;
-        userModel.update(user, (err: Error) => {
+        const userId: number = parseInt(req.body.id);
+        userModel.update(user, userId, (err: Error) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
