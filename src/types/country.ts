@@ -1,5 +1,4 @@
 export interface Country {
-    id: number;
     name: string;
     official_name: string;
     capital: string;
@@ -13,10 +12,19 @@ export interface Country {
 }
 
 export class Currency {
-    name: string;
+    country_code: string;
+    currency_name: string;
     symbol: string;
-    constructor(name: string, symbol: string) {
-        this.name = name;
+    id: number;
+    constructor(
+        currency_name: string,
+        symbol: string,
+        id: number,
+        country_code: string
+    ) {
+        this.country_code = country_code;
+        this.currency_name = currency_name;
         this.symbol = symbol;
+        this.id = id;
     }
 }

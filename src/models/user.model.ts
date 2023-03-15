@@ -26,7 +26,7 @@ export const createScore = (userScore: UserScore, callback: Function) => {
 
     database.query(
         query,
-        [userScore.user_id, userScore.country_id],
+        [userScore.user_id, userScore.country_code],
         (err, result: OkPacket) => {
             if (err) {
                 callback(err);
@@ -68,33 +68,6 @@ export const connect = async (
     });
 };
 
-export const findAll = (callback: Function) => {
-    const query = 'SELECT * FROM users';
-
-    database.query(query, (err, result) => {
-        if (err) {
-            callback(err);
-        } else {
-            const rows = <RowDataPacket[]>result;
-            const users: User[] = [];
-
-            rows.forEach((row) => {
-                const user: User = {
-                    id: row.id,
-                    name: row.name,
-                    password: row.password,
-                    image: row.image,
-                    level: row.level,
-                    last_activity: row.last_activity,
-                    created_at: row.created_at
-                };
-                users.push(user);
-            });
-            callback(null, users);
-        }
-    });
-};
-
 export const findOne = (id: number, callback: Function) => {
     const query = 'SELECT * FROM users WHERE id = ?';
 
@@ -116,6 +89,37 @@ export const findOne = (id: number, callback: Function) => {
                     created_at: rows[0].created_at
                 };
                 callback(null, user);
+            }
+        }
+    );
+};
+
+export const findOneScore = (
+    id: number,
+    country_id: string,
+    callback: Function
+) => {
+    const query =
+        'SELECT * FROM user_scores WHERE user_id = ? and country_id = ?';
+
+    database.query(
+        query,
+        [id, country_id],
+        (err, result: RowDataPacket[] | OkPacket | RowDataPacket[][]) => {
+            if (err) {
+                callback(err);
+            } else {
+                const rows = <RowDataPacket[]>result;
+                const userScore: UserScore = {
+                    user_id: rows[0].user_id,
+                    country_code: rows[0].id,
+                    succeeded_streak: rows[0].succeeded_streak,
+                    failed_streak: rows[0].failed_streak,
+                    succeeded: rows[0].succeeded,
+                    failed: rows[0].failed,
+                    level: rows[0].level
+                };
+                callback(null, userScore);
             }
         }
     );
@@ -158,7 +162,7 @@ export const updateScore = (userScore: UserScore, callback: Function) => {
             userScore.failed,
             userScore.level,
             userScore.user_id,
-            userScore.country_id
+            userScore.country_code
         ],
         (err, result) => {
             if (err) {

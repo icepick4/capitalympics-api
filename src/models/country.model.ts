@@ -1,6 +1,6 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { database } from '../database';
-import { Country } from '../types/country';
+import { Country, Currency } from '../types/country';
 
 export const create = (country: Country, callback: Function) => {
     const query =
@@ -31,18 +31,18 @@ export const create = (country: Country, callback: Function) => {
 };
 
 export const findAll = (callback: Function) => {
-    const query = 'SELECT * FROM countries';
-
+    const query =
+        'SELECT * FROM countries JOIN currencies ON countries.alpha3Code = currencies.country_code ORDER BY countries.name';
     database.query(query, (err, result) => {
         if (err) {
             callback(err);
         }
         const rows = <RowDataPacket[]>result;
         const countries: Country[] = [];
-
+        let currentCountry: Country;
+        let lastCountryCode = '';
         rows.forEach((row) => {
-            const country: Country = {
-                id: row.id,
+            currentCountry = {
                 name: row.name,
                 official_name: row.official_name,
                 capital: row.capital,
@@ -52,34 +52,69 @@ export const findAll = (callback: Function) => {
                 google_maps_link: row.google_maps_link,
                 flag: row.flag,
                 alpha3Code: row.alpha3Code,
-                currencies: row.currencies
+                currencies: []
             };
-            countries.push(country);
+
+            if (row.country_code !== lastCountryCode) {
+                const currency: Currency = {
+                    country_code: row.country_code,
+                    currency_name: row.currency_name,
+                    symbol: row.symbol,
+                    id: row.id
+                };
+                currentCountry.currencies.push(currency);
+                countries.push(currentCountry);
+            }
+
+            if (row.country_code === lastCountryCode) {
+                const currency: Currency = {
+                    country_code: row.country_code,
+                    currency_name: row.currency_name,
+                    symbol: row.symbol,
+                    id: row.id
+                };
+                countries[countries.length - 1].currencies.push(currency);
+            }
+
+            lastCountryCode = row.country_code;
         });
         callback(null, countries);
     });
 };
 
 export const findByCode = (code: string, callback: Function) => {
-    const query = 'SELECT * FROM countries WHERE alpha3Code = ?';
+    const query =
+        'SELECT * FROM countries JOIN currencies ON countries.alpha3Code = currencies.country_code WHERE countries.alpha3Code = ?';
 
     database.query(query, [code], (err, result: RowDataPacket[]) => {
         if (err) {
             callback(err);
         } else {
+            const rows = <RowDataPacket[]>result;
+            if (rows.length === 0) {
+                callback(null, { error: 'Country not found' });
+            }
             const country: Country = {
-                id: result[0].id,
-                name: result[0].name,
-                official_name: result[0].official_name,
-                capital: result[0].capital,
-                region: result[0].region,
-                subregion: result[0].subregion,
-                population: result[0].population,
-                google_maps_link: result[0].google_maps_link,
-                flag: result[0].flag,
-                alpha3Code: result[0].alpha3Code,
-                currencies: result[0].currencies
+                name: rows[0].name,
+                official_name: rows[0].official_name,
+                capital: rows[0].capital,
+                region: rows[0].region,
+                subregion: rows[0].subregion,
+                population: rows[0].population,
+                google_maps_link: rows[0].google_maps_link,
+                flag: rows[0].flag,
+                alpha3Code: rows[0].alpha3Code,
+                currencies: []
             };
+            rows.forEach((row) => {
+                const currency: Currency = {
+                    country_code: row.country_code,
+                    currency_name: row.currency_name,
+                    symbol: row.symbol,
+                    id: row.id
+                };
+                country.currencies.push(currency);
+            });
             callback(null, country);
         }
     });

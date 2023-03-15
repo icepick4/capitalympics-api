@@ -9,15 +9,6 @@ import { User, UserScore } from '../types/user';
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 
-userRouter.get('/', tokenMiddleware, async (req: Request, res: Response) => {
-    userModel.findAll((err: Error, users: User[]) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        res.status(200).json({ users: users });
-    });
-});
-
 userRouter.get('/:id', tokenMiddleware, async (req: Request, res: Response) => {
     const id: number = parseInt(req.params.id);
     userModel.findOne(id, (err: Error, user: User) => {
@@ -44,7 +35,7 @@ userRouter.post(
 );
 
 userRouter.post(
-    '/score',
+    '/score/:id',
     [userScoreTypeMiddleware, tokenMiddleware],
     async (req: Request, res: Response) => {
         const userScore: UserScore = req.body;
@@ -83,7 +74,7 @@ userRouter.post('/connect/', async (req: Request, res: Response) => {
 });
 
 userRouter.put(
-    '/',
+    '/:id',
     [userTypeMiddleware, tokenMiddleware],
     async (req: Request, res: Response) => {
         const user: User = req.body;
@@ -98,7 +89,7 @@ userRouter.put(
 );
 
 userRouter.put(
-    '/score',
+    '/score/:id',
     [userScoreTypeMiddleware, tokenMiddleware],
     async (req: Request, res: Response) => {
         const userScore: UserScore = req.body;
