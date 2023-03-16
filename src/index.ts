@@ -1,6 +1,7 @@
 import * as bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import express from 'express';
+import { corsMiddleware } from './authMiddlewares';
 import countryRouter from './routes/countryRouter';
 import userRouter from './routes/userRouter';
 const app = express();
@@ -9,8 +10,8 @@ dotenv.config();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use('/users', userRouter);
-app.use('/countries', countryRouter);
+app.use('/users', corsMiddleware, userRouter);
+app.use('/countries', corsMiddleware, countryRouter);
 
 app.get('*', (_req, res) => {
     res.status(404).json({
