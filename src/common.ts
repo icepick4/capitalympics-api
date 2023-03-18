@@ -6,7 +6,6 @@ export const hashPassword = async (
     username: string,
     password: string
 ): Promise<string> => {
-    console.log(typeof username, typeof password);
     return await bcrypt.hash(username + password, saltRounds);
 };
 

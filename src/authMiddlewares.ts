@@ -34,8 +34,6 @@ export const userTypeMiddleware = (
 ) => {
     const user: User = req.body.user;
     if (req.method === 'POST' && req.url === '/') {
-        console.log(req.body);
-        console.log(user, typeof user, 'name' in user, 'password' in user);
         if (
             !user ||
             typeof user !== 'object' ||

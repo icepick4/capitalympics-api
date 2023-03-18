@@ -5,7 +5,6 @@ import { User, UserScore } from '../types/user';
 export const create = async (user: User, callback: Function) => {
     const query =
         'INSERT INTO users (name, password, image, last_activity) VALUES (?, ?, ?, ?)';
-    console.log(user);
     const hashedPassword = await hashPassword(user.name, user.password);
     user.password = hashedPassword;
     database.query(

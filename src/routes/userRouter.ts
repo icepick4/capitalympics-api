@@ -58,26 +58,29 @@ userRouter.post(
 );
 
 userRouter.post('/connect/', async (req: Request, res: Response) => {
-    const name = req.body.name;
-    const password = req.body.password;
-
-    userModel.connect(name, password, (err: Error, user: User | null) => {
-        if (err || !user) {
-            return res
-                .status(500)
-                .json({ message: 'User not found', error: err });
+    const user: User = req.body.user;
+    userModel.connect(
+        user.name,
+        user.password,
+        (err: Error, user: User | null) => {
+            if (err || !user) {
+                return res
+                    .status(500)
+                    .json({ message: 'User not found', error: err });
+            }
+            const token = jwt.sign(
+                {
+                    id: user.id,
+                    name: user.name,
+                    level: user.level,
+                    date: new Date()
+                },
+                process.env.JWT_TOKEN
+            );
+            user.password = '';
+            res.status(200).json({ token, user });
         }
-        const token = jwt.sign(
-            {
-                id: user.id,
-                name: user.name,
-                level: user.level,
-                date: new Date()
-            },
-            process.env.JWT_TOKEN
-        );
-        res.status(200).json({ token });
-    });
+    );
 });
 
 userRouter.put(
