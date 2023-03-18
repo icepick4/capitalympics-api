@@ -9,6 +9,15 @@ import { User, UserScore } from '../types/user';
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 
+userRouter.get('/', async (req: Request, res: Response) => {
+    userModel.count((err: Error, count: number) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.status(200).json({ count: count });
+    });
+});
+
 userRouter.get('/:id', tokenMiddleware, async (req: Request, res: Response) => {
     const id: number = parseInt(req.params.id);
     userModel.findOne(id, (err: Error, user: User) => {

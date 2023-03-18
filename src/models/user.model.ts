@@ -79,6 +79,10 @@ export const findOne = (id: number, callback: Function) => {
                 callback(err);
             } else {
                 const rows = <RowDataPacket[]>result;
+                if (rows.length !== 1) {
+                    callback(null, null);
+                    return;
+                }
                 const user: User = {
                     id: rows[0].id,
                     name: rows[0].name,
@@ -110,6 +114,10 @@ export const findOneScore = (
                 callback(err);
             } else {
                 const rows = <RowDataPacket[]>result;
+                if (rows.length !== 1) {
+                    callback(null, null);
+                    return;
+                }
                 const userScore: UserScore = {
                     user_id: rows[0].user_id,
                     country_code: rows[0].id,
@@ -183,4 +191,20 @@ export const remove = (id: number, callback: Function) => {
             callback(null);
         }
     });
+};
+
+export const count = (callback: Function) => {
+    const query = 'SELECT COUNT(*) AS count FROM users';
+    database.query(
+        query,
+        (err, result: RowDataPacket[] | OkPacket | RowDataPacket[][]) => {
+            if (err) {
+                callback(err);
+            } else {
+                const rows = <RowDataPacket[]>result;
+                const count = rows[0].count;
+                callback(null, count);
+            }
+        }
+    );
 };

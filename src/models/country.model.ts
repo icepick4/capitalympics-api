@@ -93,6 +93,7 @@ export const findByCode = (code: string, callback: Function) => {
             const rows = <RowDataPacket[]>result;
             if (rows.length === 0) {
                 callback(null, { error: 'Country not found' });
+                return;
             }
             const country: Country = {
                 name: rows[0].name,
