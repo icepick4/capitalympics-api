@@ -5,6 +5,7 @@ import { User, UserScore } from '../types/user';
 export const create = async (user: User, callback: Function) => {
     const query =
         'INSERT INTO users (name, password, image, last_activity) VALUES (?, ?, ?, ?)';
+    console.log(user);
     const hashedPassword = await hashPassword(user.name, user.password);
     user.password = hashedPassword;
     database.query(
@@ -71,31 +72,27 @@ export const connect = async (
 export const findOne = (id: number, callback: Function) => {
     const query = 'SELECT * FROM users WHERE id = ?';
 
-    database.query(
-        query,
-        [id],
-        (err, result: RowDataPacket[] | OkPacket | RowDataPacket[][]) => {
-            if (err) {
-                callback(err);
-            } else {
-                const rows = <RowDataPacket[]>result;
-                if (rows.length !== 1) {
-                    callback(null, null);
-                    return;
-                }
-                const user: User = {
-                    id: rows[0].id,
-                    name: rows[0].name,
-                    password: rows[0].password,
-                    image: rows[0].image,
-                    level: rows[0].level,
-                    last_activity: rows[0].last_activity,
-                    created_at: rows[0].created_at
-                };
-                callback(null, user);
+    database.query(query, [id], (err, result: RowDataPacket[]) => {
+        if (err) {
+            callback(err);
+        } else {
+            const rows = <RowDataPacket[]>result;
+            if (rows.length !== 1) {
+                callback(null, null);
+                return;
             }
+            const user: User = {
+                id: rows[0].id,
+                name: rows[0].name,
+                password: rows[0].password,
+                image: rows[0].image,
+                level: rows[0].level,
+                last_activity: rows[0].last_activity,
+                created_at: rows[0].created_at
+            };
+            callback(null, user);
         }
-    );
+    });
 };
 
 export const findOneScore = (
@@ -106,31 +103,27 @@ export const findOneScore = (
     const query =
         'SELECT * FROM user_scores WHERE user_id = ? and country_id = ?';
 
-    database.query(
-        query,
-        [id, country_id],
-        (err, result: RowDataPacket[] | OkPacket | RowDataPacket[][]) => {
-            if (err) {
-                callback(err);
-            } else {
-                const rows = <RowDataPacket[]>result;
-                if (rows.length !== 1) {
-                    callback(null, null);
-                    return;
-                }
-                const userScore: UserScore = {
-                    user_id: rows[0].user_id,
-                    country_code: rows[0].id,
-                    succeeded_streak: rows[0].succeeded_streak,
-                    failed_streak: rows[0].failed_streak,
-                    succeeded: rows[0].succeeded,
-                    failed: rows[0].failed,
-                    level: rows[0].level
-                };
-                callback(null, userScore);
+    database.query(query, [id, country_id], (err, result: RowDataPacket[]) => {
+        if (err) {
+            callback(err);
+        } else {
+            const rows = <RowDataPacket[]>result;
+            if (rows.length !== 1) {
+                callback(null, null);
+                return;
             }
+            const userScore: UserScore = {
+                user_id: rows[0].user_id,
+                country_code: rows[0].id,
+                succeeded_streak: rows[0].succeeded_streak,
+                failed_streak: rows[0].failed_streak,
+                succeeded: rows[0].succeeded,
+                failed: rows[0].failed,
+                level: rows[0].level
+            };
+            callback(null, userScore);
         }
-    );
+    });
 };
 
 export const update = (user: User, userId: number, callback: Function) => {
@@ -195,16 +188,13 @@ export const remove = (id: number, callback: Function) => {
 
 export const count = (callback: Function) => {
     const query = 'SELECT COUNT(*) AS count FROM users';
-    database.query(
-        query,
-        (err, result: RowDataPacket[] | OkPacket | RowDataPacket[][]) => {
-            if (err) {
-                callback(err);
-            } else {
-                const rows = <RowDataPacket[]>result;
-                const count = rows[0].count;
-                callback(null, count);
-            }
+    database.query(query, (err, result: RowDataPacket[]) => {
+        if (err) {
+            callback(err);
+        } else {
+            const rows = <RowDataPacket[]>result;
+            const count = rows[0].count;
+            callback(null, count);
         }
-    );
+    });
 };

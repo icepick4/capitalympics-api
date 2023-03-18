@@ -32,8 +32,10 @@ export const userTypeMiddleware = (
     res: Response,
     next: NextFunction
 ) => {
-    const user: User = req.body;
+    const user: User = req.body.user;
     if (req.method === 'POST' && req.url === '/') {
+        console.log(req.body);
+        console.log(user, typeof user, 'name' in user, 'password' in user);
         if (
             !user ||
             typeof user !== 'object' ||
@@ -66,7 +68,7 @@ export const userScoreTypeMiddleware = (
     res: Response,
     next: NextFunction
 ) => {
-    const userScore = req.body;
+    const userScore = req.body.userScore;
     if (req.method === 'POST' && req.url === '/scores') {
         if (
             !userScore ||

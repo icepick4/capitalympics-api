@@ -33,7 +33,7 @@ userRouter.post(
     '/',
     userTypeMiddleware,
     async (req: Request, res: Response) => {
-        const user: User = req.body;
+        const user: User = req.body.user;
         userModel.create(user, (err: Error, userId: number) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
@@ -47,7 +47,7 @@ userRouter.post(
     '/score/:id',
     [userScoreTypeMiddleware, tokenMiddleware],
     async (req: Request, res: Response) => {
-        const userScore: UserScore = req.body;
+        const userScore: UserScore = req.body.userScore;
         userModel.createScore(userScore, (err: Error, userId: number) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
@@ -60,8 +60,7 @@ userRouter.post(
 userRouter.post('/connect/', async (req: Request, res: Response) => {
     const name = req.body.name;
     const password = req.body.password;
-    const device = req.body.device;
-    const screenSize = req.body.screenSize;
+
     userModel.connect(name, password, (err: Error, user: User | null) => {
         if (err || !user) {
             return res
@@ -73,8 +72,7 @@ userRouter.post('/connect/', async (req: Request, res: Response) => {
                 id: user.id,
                 name: user.name,
                 level: user.level,
-                device: device,
-                screenSize: screenSize
+                date: new Date()
             },
             process.env.JWT_TOKEN
         );
