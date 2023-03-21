@@ -33,6 +33,7 @@ export const userTypeMiddleware = (
     next: NextFunction
 ) => {
     const user: User = req.body;
+    //checks that the user is properly formatted
     if (req.method === 'POST' && req.url === '/') {
         if (
             !user ||
@@ -67,6 +68,7 @@ export const userScoreTypeMiddleware = (
     next: NextFunction
 ) => {
     const userScore = req.body;
+    //checks that the user score is properly formatted
     if (req.method === 'POST' && req.url === '/scores') {
         if (
             !userScore ||
@@ -102,6 +104,7 @@ export const corsMiddleware = (
     res: Response,
     next: NextFunction
 ) => {
+    //allow only localhost:3000 for the moment
     if (req.url.startsWith('/users')) {
         res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
     } else {

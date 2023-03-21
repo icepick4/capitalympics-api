@@ -11,20 +11,9 @@ export interface Country {
     currencies: Currency[];
 }
 
-export class Currency {
+export interface Currency {
     country_code: string;
     currency_name: string;
     symbol: string;
     id: number;
-    constructor(
-        currency_name: string,
-        symbol: string,
-        id: number,
-        country_code: string
-    ) {
-        this.country_code = country_code;
-        this.currency_name = currency_name;
-        this.symbol = symbol;
-        this.id = id;
-    }
 }

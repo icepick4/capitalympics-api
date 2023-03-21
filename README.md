@@ -4,7 +4,7 @@ This is an API built with Node.js, Express, and MySQL to manage users and their 
 
 ## Endpoints
 
-The API is private for the `/users` endpoints, meaning that an API key must be included in the request header to access them. The API is open for the `/countries` endpoints.
+The API is private for the `/users` endpoints, meaning that a token associated to the user must be included in the request header to access them (the token depends on the day you log in). The API is open for the `/countries` endpoints with GET Method.
 
 ### Countries
 
@@ -13,4 +13,4 @@ The API is private for the `/users` endpoints, meaning that an API key must be i
 
 ### Users
 
--   All endpoints require an API key in the request header.
+-   All endpoints require a user token.
