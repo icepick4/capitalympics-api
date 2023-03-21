@@ -5,8 +5,11 @@ import { corsMiddleware } from './authMiddlewares';
 import countryRouter from './routes/countryRouter';
 import userRouter from './routes/userRouter';
 const app = express();
+const cors = require('cors');
+
 dotenv.config();
 
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 

@@ -32,8 +32,7 @@ export const userTypeMiddleware = (
     res: Response,
     next: NextFunction
 ) => {
-    const user: User = req.body;
-    //checks that the user is properly formatted
+    const user: User = req.body.user;
     if (req.method === 'POST' && req.url === '/') {
         if (
             !user ||
@@ -67,8 +66,7 @@ export const userScoreTypeMiddleware = (
     res: Response,
     next: NextFunction
 ) => {
-    const userScore = req.body;
-    //checks that the user score is properly formatted
+    const userScore = req.body.userScore;
     if (req.method === 'POST' && req.url === '/scores') {
         if (
             !userScore ||
@@ -104,16 +102,8 @@ export const corsMiddleware = (
     res: Response,
     next: NextFunction
 ) => {
-    //allow only localhost:3000 for the moment
-    if (req.url.startsWith('/users')) {
-        res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-    } else {
-        res.header('Access-Control-Allow-Origin', '*');
-    }
-    res.header(
-        'Access-Control-Allow-Headers',
-        'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-    );
+    res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
     next();
 };

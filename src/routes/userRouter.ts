@@ -9,6 +9,15 @@ import { User, UserScore } from '../types/user';
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 
+userRouter.get('/', async (req: Request, res: Response) => {
+    userModel.count((err: Error, count: number) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.status(200).json({ count: count });
+    });
+});
+
 userRouter.get('/:id', tokenMiddleware, async (req: Request, res: Response) => {
     const id: number = parseInt(req.params.id);
     userModel.findOne(id, (err: Error, user: User) => {
@@ -24,7 +33,7 @@ userRouter.post(
     '/',
     userTypeMiddleware,
     async (req: Request, res: Response) => {
-        const user: User = req.body;
+        const user: User = req.body.user;
         userModel.create(user, (err: Error, userId: number) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
@@ -38,7 +47,7 @@ userRouter.post(
     '/score/:id',
     [userScoreTypeMiddleware, tokenMiddleware],
     async (req: Request, res: Response) => {
-        const userScore: UserScore = req.body;
+        const userScore: UserScore = req.body.userScore;
         userModel.createScore(userScore, (err: Error, userId: number) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
@@ -49,28 +58,29 @@ userRouter.post(
 );
 
 userRouter.post('/connect/', async (req: Request, res: Response) => {
-    const name = req.body.name;
-    const password = req.body.password;
-    const device = req.body.device;
-    const screenSize = req.body.screenSize;
-    userModel.connect(name, password, (err: Error, user: User | null) => {
-        if (err || !user) {
-            return res
-                .status(500)
-                .json({ message: 'User not found', error: err });
+    const user: User = req.body.user;
+    userModel.connect(
+        user.name,
+        user.password,
+        (err: Error, user: User | null) => {
+            if (err || !user) {
+                return res
+                    .status(500)
+                    .json({ message: 'User not found', error: err });
+            }
+            const token = jwt.sign(
+                {
+                    id: user.id,
+                    name: user.name,
+                    level: user.level,
+                    date: new Date()
+                },
+                process.env.JWT_TOKEN
+            );
+            user.password = '';
+            res.status(200).json({ token, user });
         }
-        const token = jwt.sign(
-            {
-                id: user.id,
-                name: user.name,
-                level: user.level,
-                device: device,
-                screenSize: screenSize
-            },
-            process.env.JWT_TOKEN
-        );
-        res.status(200).json({ token });
-    });
+    );
 });
 
 userRouter.put(
