@@ -3,13 +3,14 @@ import { comparePasswords, hashPassword } from '../common';
 import { database } from '../database';
 import { User, UserScore } from '../types/user';
 export const create = async (user: User, callback: Function) => {
+    console.log(user.created_at);
     const query =
-        'INSERT INTO users (name, password, image, last_activity) VALUES (?, ?, ?, ?)';
+        'INSERT INTO users (name, password, last_activity) VALUES (?, ?, ?)';
     const hashedPassword = await hashPassword(user.name, user.password);
     user.password = hashedPassword;
     database.query(
         query,
-        [user.name, user.password, user.image, user.last_activity],
+        [user.name, user.password, user.last_activity],
         (err, result: OkPacket) => {
             if (err) {
                 callback(err);
@@ -41,6 +42,7 @@ export const createScore = (userScore: UserScore, callback: Function) => {
 export const connect = async (
     name: string,
     password: string,
+    last_activity: string,
     callback: Function
 ) => {
     const query = 'SELECT * FROM users WHERE name = ?';
@@ -51,13 +53,13 @@ export const connect = async (
             const rows = <RowDataPacket[]>result;
             for (let row of rows) {
                 if (await comparePasswords(name, password, row.password)) {
+                    updateActivity(last_activity, row.id);
                     const user: User = {
                         id: row.id,
                         name: row.name,
                         password: row.password,
-                        image: row.image,
                         level: row.level,
-                        last_activity: row.last_activity,
+                        last_activity: last_activity,
                         created_at: row.created_at
                     };
                     return callback(null, user);
@@ -84,7 +86,6 @@ export const findOne = (id: number, callback: Function) => {
                 id: rows[0].id,
                 name: rows[0].name,
                 password: rows[0].password,
-                image: rows[0].image,
                 level: rows[0].level,
                 last_activity: rows[0].last_activity,
                 created_at: rows[0].created_at
@@ -127,18 +128,11 @@ export const findOneScore = (
 
 export const update = (user: User, userId: number, callback: Function) => {
     const query =
-        'UPDATE users SET name = ?, password = ?, image = ?, level = ?, last_activity = ? WHERE id = ?';
+        'UPDATE users SET name = ?, password = ?, level = ?, last_activity = ? WHERE id = ?';
 
     database.query(
         query,
-        [
-            user.name,
-            user.password,
-            user.image,
-            user.level,
-            user.last_activity,
-            userId
-        ],
+        [user.name, user.password, user.level, user.last_activity, userId],
         (err, result) => {
             if (err) {
                 callback(err);
@@ -147,6 +141,15 @@ export const update = (user: User, userId: number, callback: Function) => {
             }
         }
     );
+};
+
+const updateActivity = (activity: string, userId: number) => {
+    const query = 'UPDATE users SET last_activity = ? WHERE id = ?';
+    database.query(query, [activity, userId], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+    });
 };
 
 export const updateScore = (userScore: UserScore, callback: Function) => {

@@ -62,6 +62,7 @@ userRouter.post('/connect/', async (req: Request, res: Response) => {
     userModel.connect(
         user.name,
         user.password,
+        user.last_activity,
         (err: Error, user: User | null) => {
             if (err || !user) {
                 return res

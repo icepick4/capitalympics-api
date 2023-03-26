@@ -38,7 +38,8 @@ export const userTypeMiddleware = (
             !user ||
             typeof user !== 'object' ||
             !('name' in user) ||
-            !('password' in user)
+            !('password' in user) ||
+            !('created_at' in user)
         ) {
             return res.status(400).send('Invalid user object for POST /users');
         } else {
@@ -51,7 +52,6 @@ export const userTypeMiddleware = (
         !('id' in user) ||
         !('name' in user) ||
         !('password' in user) ||
-        !('image' in user) ||
         !('level' in user) ||
         !('last_activity' in user) ||
         !('created_at' in user)

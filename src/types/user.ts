@@ -2,10 +2,9 @@ export interface User {
     id: number;
     name: string;
     password: string;
-    image: string;
     level: Level;
-    last_activity: Date;
-    created_at: Date;
+    last_activity: string;
+    created_at: string;
 }
 
 export interface UserScore {
