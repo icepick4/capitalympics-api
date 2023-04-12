@@ -43,6 +43,20 @@ userRouter.post(
     }
 );
 
+userRouter.get(
+    '/score/:id',
+    tokenMiddleware,
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        userModel.findAllLevels(id, (err: Error, userScore: UserScore) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            res.status(200).json({ userScore: userScore });
+        });
+    }
+);
+
 userRouter.post(
     '/score/:id',
     [userScoreTypeMiddleware, tokenMiddleware],

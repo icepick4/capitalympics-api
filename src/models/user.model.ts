@@ -128,6 +128,27 @@ export const findOneScore = (
     });
 };
 
+export const findAllLevels = (id: number, callback: Function) => {
+    const query = 'SELECT level FROM userScores WHERE user_id = ?';
+
+    database.query(query, [id], (err, result: RowDataPacket[]) => {
+        if (err) {
+            callback(err);
+        } else {
+            const rows = <RowDataPacket[]>result;
+            if (rows.length === 0) {
+                callback(null, 0);
+                return;
+            }
+            let levels: number[] = [];
+            for (let row of rows) {
+                levels.push(row.level);
+            }
+            callback(null, levels);
+        }
+    });
+};
+
 export const update = (user: User, userId: number, callback: Function) => {
     const query =
         'UPDATE users SET name = ?, password = ?, level = ?, last_activity = ? WHERE id = ?';
