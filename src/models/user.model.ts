@@ -22,12 +22,27 @@ export const create = async (user: User, callback: Function) => {
     );
 };
 
-export const createScore = (userScore: UserScore, callback: Function) => {
-    const query = 'INSERT INTO user_scores (user_id, country_id) VALUES (?, ?)';
-
+export const createScore = (
+    userScore: UserScore,
+    userId: number,
+    countryCode: string,
+    callback: Function
+) => {
+    const query =
+        'INSERT INTO user_scores (user_id, country_code, succeeded, succeeded_streak, medium, medium_streak, failed, failed_streak, level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
     database.query(
         query,
-        [userScore.user_id, userScore.country_code],
+        [
+            userId,
+            countryCode,
+            userScore.succeeded,
+            userScore.succeeded_streak,
+            userScore.medium,
+            userScore.medium_streak,
+            userScore.failed,
+            userScore.failed_streak,
+            userScore.level
+        ],
         (err, result: OkPacket) => {
             if (err) {
                 callback(err);
@@ -37,6 +52,19 @@ export const createScore = (userScore: UserScore, callback: Function) => {
             }
         }
     );
+};
+
+export const resetStreaks = (userId: number, callback: Function) => {
+    const query =
+        'UPDATE user_scores SET succeeded_streak = 0, medium_streak = 0, failed_streak = 0 WHERE user_id = ?';
+
+    database.query(query, [userId], (err, result: OkPacket) => {
+        if (err) {
+            callback(err);
+        } else {
+            callback(null, result);
+        }
+    });
 };
 
 export const connect = async (
@@ -175,29 +203,22 @@ const updateActivity = (activity: string, userId: number) => {
     });
 };
 
-export const updateScore = (userScore: UserScore, callback: Function) => {
+export const updateScore = (
+    userScore: UserScore,
+    userId: number,
+    countryCode: string,
+    callback: Function
+) => {
     const query =
-        'UPDATE userScores SET succeeded_streak = ?, failed_streak = ?, succeeded = ?, failed = ?, level = ? WHERE user_id = ? AND country_id = ?';
+        'UPDATE userScores SET ? WHERE user_id = ? and country_code = ?';
 
-    database.query(
-        query,
-        [
-            userScore.succeeded_streak,
-            userScore.failed_streak,
-            userScore.succeeded,
-            userScore.failed,
-            userScore.level,
-            userScore.user_id,
-            userScore.country_code
-        ],
-        (err, result) => {
-            if (err) {
-                callback(err);
-            } else {
-                callback(null);
-            }
+    database.query(query, [userScore, userId, countryCode], (err, result) => {
+        if (err) {
+            callback(err);
+        } else {
+            callback(null);
         }
-    );
+    });
 };
 
 export const remove = (id: number, callback: Function) => {

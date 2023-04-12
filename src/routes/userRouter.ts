@@ -6,6 +6,7 @@ import {
     userScoreTypeMiddleware,
     userTypeMiddleware
 } from '../utils/authMiddlewares';
+import { calculateScore } from '../utils/common';
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 
@@ -29,6 +30,46 @@ userRouter.get('/:id', tokenMiddleware, async (req: Request, res: Response) => {
     });
 });
 
+userRouter.get(
+    ':id/score',
+    tokenMiddleware,
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        userModel.findAllLevels(id, (err: Error, userScore: UserScore) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            res.status(200).json({ userScore: userScore });
+        });
+    }
+);
+
+userRouter.get(
+    '/:id/score/:country_code',
+    tokenMiddleware,
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        const country_code: string = req.params.country_code;
+        userModel.findOneScore(
+            id,
+            country_code,
+            (err: Error, userScore: UserScore) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                res.status(200).json({
+                    userScore: userScore,
+                    score: calculateScore(
+                        userScore.succeeded,
+                        userScore.medium,
+                        userScore.failed
+                    )
+                });
+            }
+        );
+    }
+);
+
 userRouter.post(
     '/',
     userTypeMiddleware,
@@ -43,31 +84,24 @@ userRouter.post(
     }
 );
 
-userRouter.get(
-    '/score/:id',
-    tokenMiddleware,
-    async (req: Request, res: Response) => {
-        const id: number = parseInt(req.params.id);
-        userModel.findAllLevels(id, (err: Error, userScore: UserScore) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
-            res.status(200).json({ userScore: userScore });
-        });
-    }
-);
-
 userRouter.post(
-    '/score/:id',
+    '/:id/score/:country_code',
     [userScoreTypeMiddleware, tokenMiddleware],
     async (req: Request, res: Response) => {
-        const userScore: UserScore = req.body.userScore;
-        userModel.createScore(userScore, (err: Error, userId: number) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
+        const userScore: UserScore = req.body;
+        const id: number = parseInt(req.params.id);
+        const country_code: string = req.params.country_code;
+        userModel.createScore(
+            userScore,
+            id,
+            country_code,
+            (err: Error, userScoreId: number) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                res.status(200).json({ userScoreId: userScoreId });
             }
-            res.status(200).json({ userId: userId });
-        });
+        );
     }
 );
 
@@ -114,12 +148,13 @@ userRouter.put(
 );
 
 userRouter.put(
-    '/score/:id',
+    '/:id/score/:country_code',
     [userScoreTypeMiddleware, tokenMiddleware],
     async (req: Request, res: Response) => {
-        const userScore: UserScore = req.body;
-
-        userModel.updateScore(userScore, (err: Error) => {
+        const userScore: UserScore = req.body.userScore;
+        const userId: number = parseInt(req.body.id);
+        const countryCode: string = req.body.countryCode;
+        userModel.updateScore(userScore, userId, countryCode, (err: Error) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }

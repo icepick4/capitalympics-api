@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { User } from './types/user';
+import { User } from '../types/user';
 const jwt = require('jsonwebtoken');
 export const tokenMiddleware = (
     req: Request,
