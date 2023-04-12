@@ -10,10 +10,12 @@ export interface User {
 export interface UserScore {
     user_id: number;
     country_code: number;
-    succeeded_streak: number;
-    failed_streak: number;
     succeeded: number;
+    succeeded_streak: number;
+    medium: number;
+    medium_streak: number;
     failed: number;
+    failed_streak: number;
     level: Level;
 }
 

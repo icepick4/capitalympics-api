@@ -1,9 +1,9 @@
 import * as bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import express from 'express';
-import { corsMiddleware } from './authMiddlewares';
 import countryRouter from './routes/countryRouter';
 import userRouter from './routes/userRouter';
+import { corsMiddleware } from './utils/authMiddlewares';
 const app = express();
 const cors = require('cors');
 

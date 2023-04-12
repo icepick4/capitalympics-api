@@ -1,11 +1,11 @@
 import express, { Request, Response } from 'express';
+import * as userModel from '../models/user.model';
+import { User, UserScore } from '../types/user';
 import {
     tokenMiddleware,
     userScoreTypeMiddleware,
     userTypeMiddleware
-} from '../authMiddlewares';
-import * as userModel from '../models/user.model';
-import { User, UserScore } from '../types/user';
+} from '../utils/authMiddlewares';
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 

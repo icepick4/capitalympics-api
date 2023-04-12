@@ -1,7 +1,7 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
-import { comparePasswords, hashPassword } from '../common';
 import { database } from '../database';
 import { User, UserScore } from '../types/user';
+import { comparePasswords, hashPassword } from '../utils/common';
 export const create = async (user: User, callback: Function) => {
     console.log(user.created_at);
     const query =
@@ -115,10 +115,12 @@ export const findOneScore = (
             const userScore: UserScore = {
                 user_id: rows[0].user_id,
                 country_code: rows[0].id,
-                succeeded_streak: rows[0].succeeded_streak,
-                failed_streak: rows[0].failed_streak,
                 succeeded: rows[0].succeeded,
+                succeeded_streak: rows[0].succeeded_streak,
+                medium: rows[0].medium,
+                medium_streak: rows[0].medium_streak,
                 failed: rows[0].failed,
+                failed_streak: rows[0].failed_streak,
                 level: rows[0].level
             };
             callback(null, userScore);
