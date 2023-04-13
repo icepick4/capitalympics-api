@@ -26,37 +26,63 @@ export const calculateScore = (
     let score: number = 0;
 
     const total = succeeded_count + medium_count + failed_count;
-    if (total === 0) {
-        return -1;
+    if (total < 3) {
+        return 0;
     }
 
-    const succeeded_percentage: number = succeeded_count / total;
-    const medium_percentage: number = medium_count / total;
-    const failed_percentage: number = failed_count / total;
+    const succeeded_percentage = succeeded_count / total;
+    const medium_percentage = medium_count / total;
+    const failed_percentage = failed_count / total;
 
-    // Weighted score
-    const weighted_succeeded_percentage: number = Math.min(
-        succeeded_percentage * 2,
-        1
+    // -- Weighted scores percentage -- //
+    const weighted_succeeded_percentage = Math.min(
+        succeeded_percentage * 6,
+        1.1
     );
-    const weighted_medium_percentage: number = Math.min(
-        medium_percentage * 1.5,
-        1
-    );
-    const weighted_failed_percentage: number = Math.min(
-        failed_percentage * 2,
-        1
-    );
+    const weighted_medium_percentage = Math.min(medium_percentage * 2, 1);
+    const weighted_failed_percentage = failed_percentage * 4;
 
-    // Final score
+    // -- Final score -- //
+    // The score is calculated with a logarithmic function to avoid
+    // achieving a high score with a few questions
     score = Math.round(
-        (weighted_succeeded_percentage * 100) / 3 +
-            (weighted_medium_percentage * 100) / 3 +
-            (weighted_failed_percentage * 100) / 3
+        ((weighted_succeeded_percentage * 100 -
+            weighted_medium_percentage * 10 -
+            weighted_failed_percentage * 25) *
+            Math.log10(succeeded_count + 1)) /
+            1.5
     );
 
     // Score between 0 and 100
     return Math.floor(Math.max(0, Math.min(score, 100))) as Level;
+};
+
+export const fromScoreToLevel = (score: number): Level => {
+    if (score < 0) {
+        return -1;
+    } else if (score < 10) {
+        return 0;
+    } else if (score < 20) {
+        return 1;
+    } else if (score < 30) {
+        return 2;
+    } else if (score < 40) {
+        return 3;
+    } else if (score < 50) {
+        return 4;
+    } else if (score < 60) {
+        return 5;
+    } else if (score < 70) {
+        return 6;
+    } else if (score < 80) {
+        return 7;
+    } else if (score < 90) {
+        return 8;
+    } else if (score < 100) {
+        return 9;
+    } else {
+        return 10;
+    }
 };
 
 export const getLevelName = (level: Level): string => {

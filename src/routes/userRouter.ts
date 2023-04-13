@@ -176,6 +176,25 @@ userRouter.put(
     }
 );
 
+userRouter.put(
+    '/:id/score/:country_code/new_failed',
+    [tokenMiddleware],
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        const country_code: string = req.params.country_code;
+        userModel.updateFailedScore(
+            id,
+            country_code,
+            (err: Error, response: OkPacket) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                res.status(200).json({ affectedRows: response.affectedRows });
+            }
+        );
+    }
+);
+
 userRouter.delete(
     '/:id',
     tokenMiddleware,

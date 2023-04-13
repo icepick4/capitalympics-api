@@ -1,7 +1,12 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { database } from '../database';
 import { User, UserScore } from '../types/user';
-import { comparePasswords, hashPassword } from '../utils/common';
+import {
+    calculateScore,
+    comparePasswords,
+    fromScoreToLevel,
+    hashPassword
+} from '../utils/common';
 export const create = async (user: User, callback: Function) => {
     console.log(user.created_at);
     const query =
@@ -96,35 +101,39 @@ export const findOne = (id: number, callback: Function) => {
 
 export const findOneScore = (
     id: number,
-    country_id: string,
+    country_code: string,
     callback: Function
 ) => {
     const query =
-        'SELECT * FROM user_scores WHERE user_id = ? and country_id = ?';
+        'SELECT * FROM userScores WHERE user_id = ? and country_code = ?';
 
-    database.query(query, [id, country_id], (err, result: RowDataPacket[]) => {
-        if (err) {
-            callback(err);
-        } else {
-            const rows = <RowDataPacket[]>result;
-            if (rows.length !== 1) {
-                callback(null, null);
-                return;
+    database.query(
+        query,
+        [id, country_code],
+        (err, result: RowDataPacket[]) => {
+            if (err) {
+                callback(err);
+            } else {
+                const rows = <RowDataPacket[]>result;
+                if (rows.length !== 1) {
+                    callback(null, null);
+                    return;
+                }
+                const userScore: UserScore = {
+                    user_id: rows[0].user_id,
+                    alpha3Code: rows[0].alpha3Code,
+                    succeeded: rows[0].succeeded,
+                    succeeded_streak: rows[0].succeeded_streak,
+                    medium: rows[0].medium,
+                    medium_streak: rows[0].medium_streak,
+                    failed: rows[0].failed,
+                    failed_streak: rows[0].failed_streak,
+                    level: rows[0].level
+                };
+                callback(null, userScore);
             }
-            const userScore: UserScore = {
-                user_id: rows[0].user_id,
-                alpha3Code: rows[0].alpha3Code,
-                succeeded: rows[0].succeeded,
-                succeeded_streak: rows[0].succeeded_streak,
-                medium: rows[0].medium,
-                medium_streak: rows[0].medium_streak,
-                failed: rows[0].failed,
-                failed_streak: rows[0].failed_streak,
-                level: rows[0].level
-            };
-            callback(null, userScore);
         }
-    });
+    );
 };
 
 export const findAllLevels = (id: number, callback: Function) => {
@@ -174,18 +183,40 @@ const updateActivity = (activity: string, userId: number) => {
     });
 };
 
+export const updateLevel = (userId: number, countryCode: string) => {
+    const query =
+        'UPDATE userScores SET level = ? WHERE user_id = ? AND country_code = ?';
+    findOneScore(userId, countryCode, (err: any, result: UserScore) => {
+        if (result) {
+            console.log(
+                'update with that values :' +
+                    result.succeeded +
+                    ' ' +
+                    result.medium +
+                    ' ' +
+                    result.failed
+            );
+            const level = fromScoreToLevel(
+                calculateScore(result.succeeded, result.medium, result.failed)
+            );
+            database.query(query, [level, userId, countryCode]);
+        }
+    });
+};
+
 export const updateSucceededScore = (
     userId: number,
     countryCode: string,
     callback: Function
 ) => {
     const query =
-        'UPDATE user_scores SET succeeded = succeeded + 1, succeeded_streak = succeeded_streak + 1, medium_streak = 0, failed_streak = 0 WHERE user_id = ? AND country_id = ?';
-
+        'UPDATE userScores SET succeeded = succeeded + 1, succeeded_streak = succeeded_streak + 1, medium_streak = 0, failed_streak = 0 WHERE user_id = ? AND country_code = ?';
+    console.log(userId, countryCode);
     database.query(query, [userId, countryCode], (err, result: OkPacket) => {
         if (err) {
             callback(err);
         } else {
+            updateLevel(userId, countryCode);
             callback(null, result);
         }
     });
@@ -197,12 +228,13 @@ export const updateMediumScore = (
     callback: Function
 ) => {
     const query =
-        'UPDATE user_scores SET medium = medium + 1, medium_streak = medium_streak + 1, succeeded_streak = 0, failed_streak = 0 WHERE user_id = ? AND country_id = ?';
+        'UPDATE userScores SET medium = medium + 1, medium_streak = medium_streak + 1, succeeded_streak = 0, failed_streak = 0 WHERE user_id = ? AND country_code = ?';
 
     database.query(query, [userId, countryCode], (err, result: OkPacket) => {
         if (err) {
             callback(err);
         } else {
+            updateLevel(userId, countryCode);
             callback(null, result);
         }
     });
@@ -214,12 +246,13 @@ export const updateFailedScore = (
     callback: Function
 ) => {
     const query =
-        'UPDATE user_scores SET failed = failed + 1, failed_streak = failed_streak + 1, succeeded_streak = 0, medium_streak = 0 WHERE user_id = ? AND country_id = ?';
+        'UPDATE userScores SET failed = failed + 1, failed_streak = failed_streak + 1, succeeded_streak = 0, medium_streak = 0 WHERE user_id = ? AND country_code = ?';
 
     database.query(query, [userId, countryCode], (err, result: OkPacket) => {
         if (err) {
             callback(err);
         } else {
+            updateLevel(userId, countryCode);
             callback(null, result);
         }
     });
