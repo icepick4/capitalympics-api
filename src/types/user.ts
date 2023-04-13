@@ -9,7 +9,7 @@ export interface User {
 
 export interface UserScore {
     user_id: number;
-    country_code: number;
+    alpha3Code: string;
     succeeded: number;
     succeeded_streak: number;
     medium: number;
@@ -19,13 +19,4 @@ export interface UserScore {
     level: Level;
 }
 
-export enum Level {
-    Beginner = 0,
-    Intermediate = 1,
-    Advanced = 2,
-    Expert = 3,
-    Master = 4,
-    GrandMaster = 5,
-    God = 6,
-    Supreme = 7
-}
+export type Level = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;

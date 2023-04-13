@@ -142,7 +142,7 @@ export const findOneScore = (
             }
             const userScore: UserScore = {
                 user_id: rows[0].user_id,
-                country_code: rows[0].id,
+                alpha3Code: rows[0].alpha3Code,
                 succeeded: rows[0].succeeded,
                 succeeded_streak: rows[0].succeeded_streak,
                 medium: rows[0].medium,
