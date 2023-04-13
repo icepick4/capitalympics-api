@@ -1,11 +1,8 @@
 import express, { Request, Response } from 'express';
+import { OkPacket } from 'mysql2';
 import * as userModel from '../models/user.model';
 import { User, UserScore } from '../types/user';
-import {
-    tokenMiddleware,
-    userScoreTypeMiddleware,
-    userTypeMiddleware
-} from '../utils/authMiddlewares';
+import { tokenMiddleware, userTypeMiddleware } from '../utils/authMiddlewares';
 import { calculateScore } from '../utils/common';
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
@@ -86,22 +83,16 @@ userRouter.post(
 
 userRouter.post(
     '/:id/score/:country_code',
-    [userScoreTypeMiddleware, tokenMiddleware],
+    [tokenMiddleware],
     async (req: Request, res: Response) => {
-        const userScore: UserScore = req.body;
         const id: number = parseInt(req.params.id);
         const country_code: string = req.params.country_code;
-        userModel.createScore(
-            userScore,
-            id,
-            country_code,
-            (err: Error, userScoreId: number) => {
-                if (err) {
-                    return res.status(500).json({ error: err.message });
-                }
-                res.status(200).json({ userScoreId: userScoreId });
+        userModel.createScore(id, country_code, (err: Error) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
             }
-        );
+            res.status(200).send();
+        });
     }
 );
 
@@ -148,18 +139,40 @@ userRouter.put(
 );
 
 userRouter.put(
-    '/:id/score/:country_code',
-    [userScoreTypeMiddleware, tokenMiddleware],
+    '/:id/score/:country_code/new_succeeded',
+    [tokenMiddleware],
     async (req: Request, res: Response) => {
-        const userScore: UserScore = req.body.userScore;
-        const userId: number = parseInt(req.body.id);
-        const countryCode: string = req.body.countryCode;
-        userModel.updateScore(userScore, userId, countryCode, (err: Error) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
+        const id: number = parseInt(req.params.id);
+        const country_code: string = req.params.country_code;
+        userModel.updateSucceededScore(
+            id,
+            country_code,
+            (err: Error, response: OkPacket) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                res.status(200).json({ affectedRows: response.affectedRows });
             }
-            res.status(200).send();
-        });
+        );
+    }
+);
+
+userRouter.put(
+    '/:id/score/:country_code/new_medium',
+    [tokenMiddleware],
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        const country_code: string = req.params.country_code;
+        userModel.updateMediumScore(
+            id,
+            country_code,
+            (err: Error, response: OkPacket) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                res.status(200).json({ affectedRows: response.affectedRows });
+            }
+        );
     }
 );
 
@@ -168,11 +181,11 @@ userRouter.delete(
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
-        userModel.remove(id, (err: Error) => {
+        userModel.remove(id, (err: Error, response: OkPacket) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(200).send();
+            res.status(200).json({ affectedRows: response.affectedRows });
         });
     }
 );

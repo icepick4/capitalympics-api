@@ -9,6 +9,7 @@ export const tokenMiddleware = (
     const auth = req.headers.authorization;
     const token = auth && auth.split(' ')[1];
     const id = req.params.id;
+    console.log('tokenMiddleware', id, token);
 
     if (!id) {
         return res.status(401).send({ message: 'User ID missing' });

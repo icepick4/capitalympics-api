@@ -22,12 +22,12 @@ export const calculateScore = (
     succeeded_count: number,
     medium_count: number,
     failed_count: number
-): number => {
+): Level => {
     let score: number = 0;
 
     const total = succeeded_count + medium_count + failed_count;
     if (total === 0) {
-        return 0;
+        return -1;
     }
 
     const succeeded_percentage: number = succeeded_count / total;
@@ -56,11 +56,13 @@ export const calculateScore = (
     );
 
     // Score between 0 and 100
-    return Math.max(0, Math.min(score, 100));
+    return Math.floor(Math.max(0, Math.min(score, 100))) as Level;
 };
 
 export const getLevelName = (level: Level): string => {
     switch (level) {
+        case -1: // -1 is for the user who has never played
+            return 'No score';
         case 0:
             return 'Newcomer';
         case 1:
@@ -89,7 +91,7 @@ export const getLevelName = (level: Level): string => {
 };
 
 export const getNewCountryToPlay = (userScores: UserScore[]): string => {
-    //userScores are sorted by level (level between 0 and 10)
+    //userScores are sorted by level (level between -1 and 10)
     const lowPartWeight = 0.8;
     const half = Math.ceil(userScores.length / 2);
     const firstHalf = userScores.slice(0, half);
