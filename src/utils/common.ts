@@ -116,6 +116,15 @@ export const getLevelName = (level: Level): string => {
     }
 };
 
+export const getCurrentMySQLDate = (): string => {
+    let date = new Date();
+    //translate to mysql date
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000)
+        .toISOString()
+        .slice(0, 19)
+        .replace('T', ' ');
+};
+
 export const getNewCountryToPlay = (userScores: UserScore[]): string => {
     //userScores are sorted by level (level between -1 and 10)
     const lowPartWeight = 0.8;
@@ -123,11 +132,17 @@ export const getNewCountryToPlay = (userScores: UserScore[]): string => {
     const firstHalf = userScores.slice(0, half);
     const secondHalf = userScores.slice(half, userScores.length);
     const random = Math.random();
+    console.log(firstHalf);
     if (random < lowPartWeight) {
         //select a random country from the first half
+        const index = Math.floor(Math.random() * firstHalf.length);
+        console.log(index);
         return firstHalf[Math.floor(Math.random() * firstHalf.length)]
-            .alpha3Code;
+            .country_code;
     }
+    const index = Math.floor(Math.random() * firstHalf.length);
+    console.log(index);
     // select a random country from the second half
-    return secondHalf[Math.floor(Math.random() * secondHalf.length)].alpha3Code;
+    return secondHalf[Math.floor(Math.random() * secondHalf.length)]
+        .country_code;
 };

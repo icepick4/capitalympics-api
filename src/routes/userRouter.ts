@@ -3,7 +3,7 @@ import { OkPacket } from 'mysql2';
 import * as userModel from '../models/user.model';
 import { User, UserScore } from '../types/user';
 import { tokenMiddleware, userTypeMiddleware } from '../utils/authMiddlewares';
-import { calculateScore } from '../utils/common';
+import { calculateScore, getCurrentMySQLDate } from '../utils/common';
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 
@@ -13,17 +13,6 @@ userRouter.get('/', async (req: Request, res: Response) => {
             return res.status(500).json({ error: err.message });
         }
         res.status(200).json({ count: count });
-    });
-});
-
-userRouter.get('/:id', tokenMiddleware, async (req: Request, res: Response) => {
-    const id: number = parseInt(req.params.id);
-    userModel.findOne(id, (err: Error, user: User) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        const { id: _id, password: _password, ...userWithoutPassword } = user;
-        res.status(200).json({ user: userWithoutPassword });
     });
 });
 
@@ -64,6 +53,20 @@ userRouter.get(
                 });
             }
         );
+    }
+);
+
+userRouter.get(
+    '/:id/country/play',
+    tokenMiddleware,
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        userModel.findNewCountry(id, (err: Error, country_code: string) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            res.status(200).json({ country_code: country_code });
+        });
     }
 );
 
@@ -112,7 +115,6 @@ userRouter.post('/connect/', async (req: Request, res: Response) => {
                 {
                     id: user.id,
                     name: user.name,
-                    level: user.level,
                     date: new Date()
                 },
                 process.env.JWT_TOKEN
@@ -122,6 +124,26 @@ userRouter.post('/connect/', async (req: Request, res: Response) => {
         }
     );
 });
+
+userRouter.post(
+    '/connect/:id',
+    tokenMiddleware,
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        userModel.updateActivity(id, getCurrentMySQLDate(), (err: Error) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            userModel.findOne(id, (err: Error, user: User) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                const { password: _password, ...userWithoutPassword } = user;
+                res.status(200).json({ user: userWithoutPassword });
+            });
+        });
+    }
+);
 
 userRouter.put(
     '/:id',
