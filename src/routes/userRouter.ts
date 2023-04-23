@@ -75,11 +75,20 @@ userRouter.post(
     userTypeMiddleware,
     async (req: Request, res: Response) => {
         const user: User = req.body.user;
-        userModel.create(user, (err: Error, userId: number) => {
+        userModel.exists(user.name, (err: Error, exists: boolean) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(200).json({ userId: userId });
+            if (exists) {
+                return res.status(409).json({ error: 'User already exists' });
+            } else {
+                userModel.create(user, (err: Error, user: User) => {
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
+                    res.status(200).json({ user: user });
+                });
+            }
         });
     }
 );
@@ -90,11 +99,17 @@ userRouter.post(
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
         const country_code: string = req.params.country_code;
-        userModel.createScore(id, country_code, (err: Error) => {
+        //get the user name from the id
+        userModel.findOne(id, (err: Error, user: User) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(200).send();
+            userModel.createScore(id, user.name, country_code, (err: Error) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                res.status(200).send();
+            });
         });
     }
 );
@@ -117,7 +132,8 @@ userRouter.post('/connect/', async (req: Request, res: Response) => {
                     name: user.name,
                     date: new Date()
                 },
-                process.env.JWT_TOKEN
+                process.env.JWT_TOKEN,
+                { expiresIn: 60 * 60 * 4 }
             );
             user.password = '';
             res.status(200).json({ token, user });

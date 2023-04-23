@@ -23,40 +23,67 @@ export const create = async (user: User, callback: Function) => {
                 callback(err);
             } else {
                 const id = result.insertId;
-                //init every userScores for every country to -1
+                let callbackCalled = false;
+
+                //init every user_scores for every country to -1
                 countryModel.findAll((err: any, countries: Country[]) => {
                     if (err) {
-                        callback(err);
+                        if (!callbackCalled) {
+                            callback(err);
+                            callbackCalled = true;
+                        }
                     } else {
+                        let completed = 0;
                         countries.forEach((country) => {
-                            createScore(id, country.alpha3Code, (err: any) => {
-                                if (err) {
-                                    callback(err);
+                            createScore(
+                                id,
+                                user.name,
+                                country.alpha3Code,
+                                (err: any) => {
+                                    if (err) {
+                                        if (!callbackCalled) {
+                                            callback(err);
+                                            callbackCalled = true;
+                                        }
+                                    } else {
+                                        completed++;
+                                        if (
+                                            completed === countries.length &&
+                                            !callbackCalled
+                                        ) {
+                                            callback(null);
+                                            callbackCalled = true;
+                                        }
+                                    }
                                 }
-                            });
+                            );
                         });
                     }
                 });
-                callback(null, id);
             }
         }
     );
 };
 
 export const createScore = (
-    userId: number,
-    countryCode: string,
+    user_id: number,
+    user_name: string,
+    country_code: string,
     callback: Function
 ) => {
     const query =
-        'INSERT INTO userScores (user_id, country_code) VALUES (?, ?)';
-    database.query(query, [userId, countryCode], (err, result: OkPacket) => {
-        if (err) {
-            callback(err);
-        } else {
-            callback(null);
+        'INSERT INTO user_scores (user_id, user_name, country_code) VALUES (?, ?, ?)';
+    database.query(
+        query,
+        [user_id, user_name, country_code],
+        (err, result: OkPacket) => {
+            if (err) {
+                callback(err);
+            } else {
+                callback(null);
+            }
         }
-    });
+    );
 };
 
 export const connect = async (
@@ -94,17 +121,34 @@ export const connect = async (
     });
 };
 
-export const findNewCountry = (id: number, callback: Function) => {
-    const userScores = 'SELECT * FROM userScores WHERE user_id = ?';
-    database.query(userScores, [id], (err, result: RowDataPacket[]) => {
+export const exists = (name: string, callback: Function) => {
+    const query = 'SELECT * FROM users WHERE name = ?';
+    database.query(query, [name], (err, result) => {
         if (err) {
             callback(err);
         } else {
             const rows = <RowDataPacket[]>result;
-            const userScores: UserScore[] = [];
+            if (rows.length > 0) {
+                callback(null, true);
+            } else {
+                callback(null, false);
+            }
+        }
+    });
+};
+
+export const findNewCountry = (id: number, callback: Function) => {
+    const user_scores = 'SELECT * FROM user_scores WHERE user_id = ?';
+    database.query(user_scores, [id], (err, result: RowDataPacket[]) => {
+        if (err) {
+            callback(err);
+        } else {
+            const rows = <RowDataPacket[]>result;
+            const user_scores: UserScore[] = [];
             for (let row of rows) {
                 const userScore: UserScore = {
                     user_id: row.user_id,
+                    user_name: row.user_name,
                     country_code: row.country_code,
                     succeeded: row.succeeded,
                     medium: row.medium,
@@ -114,9 +158,9 @@ export const findNewCountry = (id: number, callback: Function) => {
                     failed_streak: row.failed_streak,
                     level: row.level
                 };
-                userScores.push(userScore);
+                user_scores.push(userScore);
             }
-            const newCountryCode = getNewCountryToPlay(userScores);
+            const newCountryCode = getNewCountryToPlay(user_scores);
             countryModel.findByCode(
                 newCountryCode,
                 (err: any, result: Country) => {
@@ -162,7 +206,7 @@ export const findOneScore = (
     callback: Function
 ) => {
     const query =
-        'SELECT * FROM userScores WHERE user_id = ? and country_code = ?';
+        'SELECT * FROM user_scores WHERE user_id = ? and country_code = ?';
 
     database.query(
         query,
@@ -178,6 +222,7 @@ export const findOneScore = (
                 }
                 const userScore: UserScore = {
                     user_id: rows[0].user_id,
+                    user_name: rows[0].user_name,
                     country_code: rows[0].country_code,
                     succeeded: rows[0].succeeded,
                     succeeded_streak: rows[0].succeeded_streak,
@@ -194,7 +239,7 @@ export const findOneScore = (
 };
 
 export const findAllLevels = (id: number, callback: Function) => {
-    const query = 'SELECT level FROM userScores WHERE user_id = ?';
+    const query = 'SELECT level FROM user_scores WHERE user_id = ?';
 
     database.query(query, [id], (err, result: RowDataPacket[]) => {
         if (err) {
@@ -248,7 +293,7 @@ export const updateActivity = (
 
 export const updateLevel = (userId: number, countryCode: string) => {
     const query =
-        'UPDATE userScores SET level = ? WHERE user_id = ? AND country_code = ?';
+        'UPDATE user_scores SET level = ? WHERE user_id = ? AND country_code = ?';
     findOneScore(userId, countryCode, (err: any, result: UserScore) => {
         if (result) {
             const level = fromScoreToLevel(
@@ -265,7 +310,7 @@ export const updateSucceededScore = (
     callback: Function
 ) => {
     const query =
-        'UPDATE userScores SET succeeded = succeeded + 1, succeeded_streak = succeeded_streak + 1, medium_streak = 0, failed_streak = 0 WHERE user_id = ? AND country_code = ?';
+        'UPDATE user_scores SET succeeded = succeeded + 1, succeeded_streak = succeeded_streak + 1, medium_streak = 0, failed_streak = 0 WHERE user_id = ? AND country_code = ?';
     database.query(query, [userId, countryCode], (err, result: OkPacket) => {
         if (err) {
             callback(err);
@@ -282,7 +327,7 @@ export const updateMediumScore = (
     callback: Function
 ) => {
     const query =
-        'UPDATE userScores SET medium = medium + 1, medium_streak = medium_streak + 1, succeeded_streak = 0, failed_streak = 0 WHERE user_id = ? AND country_code = ?';
+        'UPDATE user_scores SET medium = medium + 1, medium_streak = medium_streak + 1, succeeded_streak = 0, failed_streak = 0 WHERE user_id = ? AND country_code = ?';
 
     database.query(query, [userId, countryCode], (err, result: OkPacket) => {
         if (err) {
@@ -300,7 +345,7 @@ export const updateFailedScore = (
     callback: Function
 ) => {
     const query =
-        'UPDATE userScores SET failed = failed + 1, failed_streak = failed_streak + 1, succeeded_streak = 0, medium_streak = 0 WHERE user_id = ? AND country_code = ?';
+        'UPDATE user_scores SET failed = failed + 1, failed_streak = failed_streak + 1, succeeded_streak = 0, medium_streak = 0 WHERE user_id = ? AND country_code = ?';
 
     database.query(query, [userId, countryCode], (err, result: OkPacket) => {
         if (err) {
