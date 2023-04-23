@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { OkPacket } from 'mysql2';
 import * as userModel from '../models/user.model';
+import { Country } from '../types/country';
 import { User, UserScore } from '../types/user';
 import { tokenMiddleware, userTypeMiddleware } from '../utils/authMiddlewares';
 import { calculateScore, getCurrentMySQLDate } from '../utils/common';
@@ -61,11 +62,11 @@ userRouter.get(
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
-        userModel.findNewCountry(id, (err: Error, country_code: string) => {
+        userModel.findNewCountry(id, (err: Error, country: Country) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(200).json({ country_code: country_code });
+            res.status(200).json({ country: country });
         });
     }
 );
