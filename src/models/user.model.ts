@@ -22,44 +22,7 @@ export const create = async (user: User, callback: Function) => {
             if (err) {
                 callback(err);
             } else {
-                const id = result.insertId;
-                let callbackCalled = false;
-
-                //init every user_scores for every country to -1
-                countryModel.findAll((err: any, countries: Country[]) => {
-                    if (err) {
-                        if (!callbackCalled) {
-                            callback(err);
-                            callbackCalled = true;
-                        }
-                    } else {
-                        let completed = 0;
-                        countries.forEach((country) => {
-                            createScore(
-                                id,
-                                user.name,
-                                country.alpha3Code,
-                                (err: any) => {
-                                    if (err) {
-                                        if (!callbackCalled) {
-                                            callback(err);
-                                            callbackCalled = true;
-                                        }
-                                    } else {
-                                        completed++;
-                                        if (
-                                            completed === countries.length &&
-                                            !callbackCalled
-                                        ) {
-                                            callback(null);
-                                            callbackCalled = true;
-                                        }
-                                    }
-                                }
-                            );
-                        });
-                    }
-                });
+                callback(null);
             }
         }
     );
@@ -304,6 +267,27 @@ export const updateLevel = (userId: number, countryCode: string) => {
     });
 };
 
+export const updateGlobalLevel = (userId: number) => {
+    const query = 'UPDATE users SET level = ? WHERE id = ?';
+    findAllLevels(userId, (err: any, result: number[]) => {
+        if (result) {
+            let sum = 0;
+            let counter = 0;
+            for (let level of result) {
+                if (level != -1) {
+                    console.log('level: ' + level);
+                    sum += level;
+                }
+                counter++;
+            }
+            console.log('sum: ' + sum);
+            console.log('counter: ' + counter);
+            const avg = sum / counter;
+            database.query(query, [avg, userId]);
+        }
+    });
+};
+
 export const updateSucceededScore = (
     userId: number,
     countryCode: string,
@@ -316,6 +300,7 @@ export const updateSucceededScore = (
             callback(err);
         } else {
             updateLevel(userId, countryCode);
+            updateGlobalLevel(userId);
             callback(null, result);
         }
     });
@@ -334,6 +319,7 @@ export const updateMediumScore = (
             callback(err);
         } else {
             updateLevel(userId, countryCode);
+            updateGlobalLevel(userId);
             callback(null, result);
         }
     });
@@ -352,6 +338,7 @@ export const updateFailedScore = (
             callback(err);
         } else {
             updateLevel(userId, countryCode);
+            updateGlobalLevel(userId);
             callback(null, result);
         }
     });

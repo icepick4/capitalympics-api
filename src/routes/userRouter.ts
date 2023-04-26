@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import { OkPacket } from 'mysql2';
+import * as countryModel from '../models/country.model';
 import * as userModel from '../models/user.model';
+import { Country } from '../types/country';
 import { User, UserScore } from '../types/user';
 import { tokenMiddleware, userTypeMiddleware } from '../utils/authMiddlewares';
 import { calculateScore, getCurrentMySQLDate } from '../utils/common';
@@ -17,7 +19,7 @@ userRouter.get('/', async (req: Request, res: Response) => {
 });
 
 userRouter.get(
-    ':id/score',
+    ':id/scores',
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
@@ -26,6 +28,20 @@ userRouter.get(
                 return res.status(500).json({ error: err.message });
             }
             res.status(200).json({ userScore: userScore });
+        });
+    }
+);
+
+userRouter.get(
+    '/:id/score',
+    tokenMiddleware,
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        userModel.findOne(id, (err: Error, user: User) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            res.status(200).json({ score: user.level });
         });
     }
 );
@@ -61,11 +77,11 @@ userRouter.get(
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
-        userModel.findNewCountry(id, (err: Error, country_code: string) => {
+        userModel.findNewCountry(id, (err: Error, country: Country) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(200).json({ country_code: country_code });
+            res.status(200).json({ country: country });
         });
     }
 );
@@ -129,8 +145,7 @@ userRouter.post('/connect/', async (req: Request, res: Response) => {
             const token = jwt.sign(
                 {
                     id: user.id,
-                    name: user.name,
-                    date: new Date()
+                    name: user.name
                 },
                 process.env.JWT_TOKEN,
                 { expiresIn: 60 * 60 * 4 }
@@ -156,6 +171,46 @@ userRouter.post(
                 }
                 const { password: _password, ...userWithoutPassword } = user;
                 res.status(200).json({ user: userWithoutPassword });
+            });
+        });
+    }
+);
+
+userRouter.post(
+    '/init/:id',
+    tokenMiddleware,
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        userModel.findOne(id, (err: Error, user: User) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            //init every user_scores for every country to -1
+            countryModel.findAll((err: any, countries: Country[]) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                } else {
+                    let completed = 0;
+                    countries.forEach((country) => {
+                        userModel.createScore(
+                            id,
+                            user.name,
+                            country.alpha3Code,
+                            (err: any) => {
+                                if (err) {
+                                    return res.status(500).json({
+                                        error: err.message
+                                    });
+                                } else {
+                                    completed++;
+                                    if (completed === countries.length) {
+                                        res.status(200).send();
+                                    }
+                                }
+                            }
+                        );
+                    });
+                }
             });
         });
     }
