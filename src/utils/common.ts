@@ -26,9 +26,6 @@ export const calculateScore = (
     let score: number = 0;
 
     const total = succeeded_count + medium_count + failed_count;
-    if (total < 3) {
-        return 0;
-    }
 
     const succeeded_percentage = succeeded_count / total;
     const medium_percentage = medium_count / total;

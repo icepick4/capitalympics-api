@@ -191,20 +191,43 @@ userRouter.post(
                     return res.status(500).json({ error: err.message });
                 } else {
                     let completed = 0;
+                    let hasSentResponse = false;
                     countries.forEach((country) => {
                         userModel.createScore(
                             id,
                             user.name,
                             country.alpha3Code,
                             (err: any) => {
-                                if (err) {
+                                if (err && !hasSentResponse) {
+                                    hasSentResponse = true;
                                     return res.status(500).json({
                                         error: err.message
                                     });
                                 } else {
                                     completed++;
-                                    if (completed === countries.length) {
-                                        res.status(200).send();
+                                    if (
+                                        completed === countries.length &&
+                                        !hasSentResponse
+                                    ) {
+                                        user.level = 0;
+                                        userModel.update(
+                                            user,
+                                            id,
+                                            (err: any) => {
+                                                if (err) {
+                                                    return res
+                                                        .status(500)
+                                                        .json({
+                                                            error: err.message
+                                                        });
+                                                } else {
+                                                    hasSentResponse = true;
+                                                    return res
+                                                        .status(200)
+                                                        .send();
+                                                }
+                                            }
+                                        );
                                     }
                                 }
                             }

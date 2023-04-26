@@ -35,10 +35,10 @@ export const createScore = (
     callback: Function
 ) => {
     const query =
-        'INSERT INTO user_scores (user_id, user_name, country_code) VALUES (?, ?, ?)';
+        'INSERT INTO user_scores (user_id, user_name, country_code) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE user_name = ?, country_code = ?, level = -1, succeeded = 0, failed = 0, medium = 0, succeeded_streak = 0, failed_streak = 0, medium_streak = 0';
     database.query(
         query,
-        [user_id, user_name, country_code],
+        [user_id, user_name, country_code, user_name, country_code],
         (err, result: OkPacket) => {
             if (err) {
                 callback(err);
@@ -275,14 +275,14 @@ export const updateGlobalLevel = (userId: number) => {
             let counter = 0;
             for (let level of result) {
                 if (level != -1) {
-                    console.log('level: ' + level);
                     sum += level;
+                    counter++;
                 }
-                counter++;
             }
-            console.log('sum: ' + sum);
-            console.log('counter: ' + counter);
-            const avg = sum / counter;
+            let avg = sum / counter;
+            if (Number.isNaN(avg)) {
+                avg = 0;
+            }
             database.query(query, [avg, userId]);
         }
     });
