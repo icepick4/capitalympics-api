@@ -23,11 +23,16 @@ userRouter.get(
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
-        userModel.findAllLevels(id, (err: Error, scores: Array<Number>) => {
+        let max: number;
+        if (req.query.max) {
+            max = parseInt(req.query.max as string);
+        }
+        userModel.findAllLevels(id, (err: Error, scores: Array<UserScore>) => {
+            max = max ? max : scores.length;
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(200).json({ scores: scores });
+            res.status(200).json({ scores: scores.slice(0, max) });
         });
     }
 );

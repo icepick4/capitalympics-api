@@ -202,7 +202,7 @@ export const findOneScore = (
 };
 
 export const findAllLevels = (id: number, callback: Function) => {
-    const query = 'SELECT level FROM user_scores WHERE user_id = ?';
+    const query = 'SELECT * FROM user_scores WHERE user_id = ?';
 
     database.query(query, [id], (err, result: RowDataPacket[]) => {
         if (err) {
@@ -213,11 +213,25 @@ export const findAllLevels = (id: number, callback: Function) => {
                 callback(null, 0);
                 return;
             }
-            let levels: number[] = [];
+            let levels: UserScore[] = [];
             for (let row of rows) {
-                levels.push(row.level);
+                let userScore: UserScore = {
+                    user_id: row.user_id,
+                    user_name: row.user_name,
+                    country_code: row.country_code,
+                    succeeded: row.succeeded,
+                    succeeded_streak: row.succeeded_streak,
+                    medium: row.medium,
+                    medium_streak: row.medium_streak,
+                    failed: row.failed,
+                    failed_streak: row.failed_streak,
+                    level: row.level
+                };
+                levels.push(userScore);
             }
-            levels = levels.sort((a, b) => b - a);
+            levels = levels.sort((a, b) => {
+                return b.level - a.level;
+            });
             callback(null, levels);
         }
     });
