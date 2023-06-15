@@ -217,6 +217,7 @@ export const findAllLevels = (id: number, callback: Function) => {
             for (let row of rows) {
                 levels.push(row.level);
             }
+            levels = levels.sort((a, b) => b - a);
             callback(null, levels);
         }
     });

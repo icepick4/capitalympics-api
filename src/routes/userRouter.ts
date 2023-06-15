@@ -19,15 +19,15 @@ userRouter.get('/', async (req: Request, res: Response) => {
 });
 
 userRouter.get(
-    ':id/scores',
+    '/:id/scores',
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
-        userModel.findAllLevels(id, (err: Error, userScore: UserScore) => {
+        userModel.findAllLevels(id, (err: Error, scores: Array<Number>) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(200).json({ userScore: userScore });
+            res.status(200).json({ scores: scores });
         });
     }
 );
@@ -47,7 +47,7 @@ userRouter.get(
 );
 
 userRouter.get(
-    '/:id/score/:country_code',
+    '/:id/:country_code/score',
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
@@ -110,7 +110,7 @@ userRouter.post(
 );
 
 userRouter.post(
-    '/:id/score/:country_code',
+    '/:id/:country_code/score',
     [tokenMiddleware],
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
@@ -255,7 +255,7 @@ userRouter.put(
 );
 
 userRouter.put(
-    '/:id/score/:country_code/new_succeeded',
+    '/:id/:country_code/score/succeeded',
     [tokenMiddleware],
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
@@ -274,7 +274,7 @@ userRouter.put(
 );
 
 userRouter.put(
-    '/:id/score/:country_code/new_medium',
+    '/:id/:country_code/score/medium',
     [tokenMiddleware],
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
@@ -293,7 +293,7 @@ userRouter.put(
 );
 
 userRouter.put(
-    '/:id/score/:country_code/new_failed',
+    '/:id/:country_code/score/failed',
     [tokenMiddleware],
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
