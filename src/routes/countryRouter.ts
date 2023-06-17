@@ -5,11 +5,16 @@ import { Country } from '../types/country';
 const countryRouter = express.Router();
 
 countryRouter.get('/', async (req: Request, res: Response) => {
+    let max: number;
+    if (req.query.max) {
+        max = parseInt(req.query.max as string);
+    }
     countryModel.findAll((err: Error, countries: Country[]) => {
+        max = max ? max : countries.length;
         if (err) {
             return res.status(500).json({ error: err.message });
         }
-        res.status(200).json({ countries: countries });
+        res.status(200).json({ countries: countries.slice(0, max) });
     });
 });
 
