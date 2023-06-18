@@ -2,20 +2,16 @@ import { Level, UserScore } from '../types/user';
 
 const bcrypt = require('bcrypt');
 
-export const hashPassword = async (
-    username: string,
-    password: string
-): Promise<string> => {
+export const hashPassword = async (password: string): Promise<string> => {
     const saltRounds = 10;
-    return await bcrypt.hash(username + password, saltRounds);
+    return await bcrypt.hash(password, saltRounds);
 };
 
 export const comparePasswords = async (
-    name: string,
     password: string,
     hashedPassword: string
 ): Promise<boolean> => {
-    return await bcrypt.compare(name + password, hashedPassword);
+    return await bcrypt.compare(password, hashedPassword);
 };
 
 export const calculateScore = (

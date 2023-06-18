@@ -51,7 +51,6 @@ export const userTypeMiddleware = (
         typeof user !== 'object' ||
         !('id' in user) ||
         !('name' in user) ||
-        !('password' in user) ||
         !('level' in user) ||
         !('last_activity' in user) ||
         !('created_at' in user)

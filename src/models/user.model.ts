@@ -13,7 +13,7 @@ import * as countryModel from './country.model';
 export const create = async (user: User, callback: Function) => {
     const query =
         'INSERT INTO users (name, password, last_activity) VALUES (?, ?, ?)';
-    const hashedPassword = await hashPassword(user.name, user.password);
+    const hashedPassword = await hashPassword(user.password);
     user.password = hashedPassword;
     database.query(
         query,
@@ -62,7 +62,7 @@ export const connect = async (
         } else {
             const rows = <RowDataPacket[]>result;
             for (let row of rows) {
-                if (await comparePasswords(name, password, row.password)) {
+                if (await comparePasswords(password, row.password)) {
                     updateActivity(row.id, last_activity, (err: any) => {
                         if (err) {
                             return callback(err);
@@ -210,7 +210,7 @@ export const findAllLevels = (id: number, callback: Function) => {
         } else {
             const rows = <RowDataPacket[]>result;
             if (rows.length === 0) {
-                callback(null, 0);
+                callback(null, []);
                 return;
             }
             let levels: UserScore[] = [];
@@ -238,12 +238,11 @@ export const findAllLevels = (id: number, callback: Function) => {
 };
 
 export const update = (user: User, userId: number, callback: Function) => {
-    const query =
-        'UPDATE users SET name = ?, password = ?, level = ?, last_activity = ? WHERE id = ?';
+    const query = 'UPDATE users SET name = ?, last_activity = ? WHERE id = ?';
 
     database.query(
         query,
-        [user.name, user.password, user.level, user.last_activity, userId],
+        [user.name, user.last_activity, userId],
         (err, result) => {
             if (err) {
                 callback(err);

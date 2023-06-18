@@ -150,7 +150,7 @@ userRouter.post('/connect/', async (req: Request, res: Response) => {
             const token = jwt.sign(
                 {
                     id: user.id,
-                    name: user.name
+                    created_at: user.created_at
                 },
                 process.env.JWT_TOKEN,
                 { expiresIn: 60 * 60 * 4 }
@@ -248,13 +248,23 @@ userRouter.put(
     '/:id',
     [userTypeMiddleware, tokenMiddleware],
     async (req: Request, res: Response) => {
-        const user: User = req.body;
-        const userId: number = parseInt(req.body.id);
-        userModel.update(user, userId, (err: Error) => {
+        const user: User = req.body.user;
+        user.last_activity = getCurrentMySQLDate();
+        const userId: number = parseInt(req.params.id);
+        userModel.exists(user.name, (err: Error, exists: boolean) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(200).send();
+            if (exists) {
+                return res.status(409).json({ error: 'User already exists' });
+            } else {
+                userModel.update(user, userId, (err: Error) => {
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
+                    res.status(200).send();
+                });
+            }
         });
     }
 );

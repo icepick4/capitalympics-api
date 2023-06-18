@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS user_scores (
   medium INT(11) NOT NULL DEFAULT 0,
   medium_streak INT(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, user_name, country_code),
-  FOREIGN KEY (user_id, user_name) REFERENCES users(id, name)
+  FOREIGN KEY (user_id, user_name) REFERENCES users (id, name) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Init table countries
