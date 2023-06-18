@@ -11,10 +11,16 @@ countryRouter.get('/', async (req: Request, res: Response) => {
     }
     countryModel.findAll((err: Error, countries: Country[]) => {
         max = max ? max : countries.length;
+        const randomStart = Math.floor(
+            Math.random() * (countries.length - max)
+        );
+        if (max != countries.length) {
+            countries = countries.slice(randomStart, randomStart + max);
+        }
         if (err) {
             return res.status(500).json({ error: err.message });
         }
-        res.status(200).json({ countries: countries.slice(0, max) });
+        res.status(200).json({ countries: countries });
     });
 });
 
