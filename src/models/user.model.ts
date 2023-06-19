@@ -71,10 +71,12 @@ export const connect = async (
                     const user: User = {
                         id: row.id,
                         name: row.name,
+                        image: row.image,
                         password: row.password,
                         level: row.level,
                         last_activity: last_activity,
-                        created_at: row.created_at
+                        created_at: row.created_at,
+                        language: row.language
                     };
                     return callback(null, user);
                 }
@@ -84,9 +86,12 @@ export const connect = async (
     });
 };
 
-export const exists = (name: string, callback: Function) => {
-    const query = 'SELECT * FROM users WHERE name = ?';
-    database.query(query, [name], (err, result) => {
+export const exists = (name: string, id: number | null, callback: Function) => {
+    const query =
+        id == null
+            ? 'SELECT * FROM users WHERE name = ?'
+            : 'SELECT * FROM users WHERE name = ? AND id != ?';
+    database.query(query, [name, id], (err, result) => {
         if (err) {
             callback(err);
         } else {
@@ -153,10 +158,12 @@ export const findOne = (id: number, callback: Function) => {
             const user: User = {
                 id: rows[0].id,
                 name: rows[0].name,
+                image: rows[0].image,
                 password: rows[0].password,
                 level: rows[0].level,
                 last_activity: rows[0].last_activity,
-                created_at: rows[0].created_at
+                created_at: rows[0].created_at,
+                language: rows[0].language
             };
             callback(null, user);
         }
@@ -238,11 +245,12 @@ export const findAllLevels = (id: number, callback: Function) => {
 };
 
 export const update = (user: User, userId: number, callback: Function) => {
-    const query = 'UPDATE users SET name = ?, last_activity = ? WHERE id = ?';
+    const query =
+        'UPDATE users SET name = ?, last_activity = ?, language = ? WHERE id = ?';
 
     database.query(
         query,
-        [user.name, user.last_activity, userId],
+        [user.name, user.last_activity, user.language, userId],
         (err, result) => {
             if (err) {
                 callback(err);

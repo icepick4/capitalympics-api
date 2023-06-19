@@ -96,7 +96,7 @@ userRouter.post(
     userTypeMiddleware,
     async (req: Request, res: Response) => {
         const user: User = req.body.user;
-        userModel.exists(user.name, (err: Error, exists: boolean) => {
+        userModel.exists(user.name, null, (err: Error, exists: boolean) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
@@ -251,7 +251,7 @@ userRouter.put(
         const user: User = req.body.user;
         user.last_activity = getCurrentMySQLDate();
         const userId: number = parseInt(req.params.id);
-        userModel.exists(user.name, (err: Error, exists: boolean) => {
+        userModel.exists(user.name, user.id, (err: Error, exists: boolean) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
