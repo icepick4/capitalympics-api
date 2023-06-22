@@ -246,11 +246,11 @@ export const findAllLevels = (id: number, callback: Function) => {
 
 export const update = (user: User, userId: number, callback: Function) => {
     const query =
-        'UPDATE users SET name = ?, last_activity = ?, language = ? WHERE id = ?';
+        'UPDATE users SET name = ?, last_activity = ?, language = ?, level = ? WHERE id = ?';
 
     database.query(
         query,
-        [user.name, user.last_activity, user.language, userId],
+        [user.name, user.last_activity, user.language, user.level, userId],
         (err, result) => {
             if (err) {
                 callback(err);
