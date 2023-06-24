@@ -27,13 +27,23 @@ userRouter.get(
         if (req.query.max) {
             max = parseInt(req.query.max as string);
         }
-        userModel.findAllLevels(id, (err: Error, scores: Array<UserScore>) => {
-            max = max ? max : scores.length;
-            if (err) {
-                return res.status(500).json({ error: err.message });
+        let sort: string;
+        if (req.query.sort) {
+            sort = req.query.sort as string;
+        } else {
+            sort = 'DESC';
+        }
+        userModel.findAllLevels(
+            id,
+            sort,
+            (err: Error, scores: Array<UserScore>) => {
+                max = max ? max : scores.length;
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                res.status(200).json({ scores: scores.slice(0, max) });
             }
-            res.status(200).json({ scores: scores.slice(0, max) });
-        });
+        );
     }
 );
 

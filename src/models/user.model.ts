@@ -208,10 +208,12 @@ export const findOneScore = (
     );
 };
 
-export const findAllLevels = (id: number, callback: Function) => {
-    const query = 'SELECT * FROM user_scores WHERE user_id = ?';
-
-    database.query(query, [id], (err, result: RowDataPacket[]) => {
+export const findAllLevels = (id: number, sort: string, callback: Function) => {
+    const query =
+        'SELECT * FROM user_scores WHERE user_id = ? AND level > -1 ORDER BY level ' +
+        sort +
+        ';';
+    database.query(query, [id, sort], (err, result: RowDataPacket[]) => {
         if (err) {
             callback(err);
         } else {
@@ -236,9 +238,6 @@ export const findAllLevels = (id: number, callback: Function) => {
                 };
                 levels.push(userScore);
             }
-            levels = levels.sort((a, b) => {
-                return b.level - a.level;
-            });
             callback(null, levels);
         }
     });
@@ -291,7 +290,7 @@ export const updateLevel = (userId: number, countryCode: string) => {
 
 export const updateGlobalLevel = (userId: number) => {
     const query = 'UPDATE users SET level = ? WHERE id = ?';
-    findAllLevels(userId, (err: any, result: number[]) => {
+    findAllLevels(userId, 'ASC', (err: any, result: number[]) => {
         if (result) {
             let sum = 0;
             let counter = 0;
