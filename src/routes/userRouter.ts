@@ -5,7 +5,7 @@ import * as userModel from '../models/user.model';
 import { Country } from '../types/country';
 import { User, UserScore } from '../types/user';
 import { tokenMiddleware, userTypeMiddleware } from '../utils/authMiddlewares';
-import { calculateScore, getCurrentMySQLDate } from '../utils/common';
+import { getCurrentMySQLDate } from '../utils/common';
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 
@@ -19,10 +19,11 @@ userRouter.get('/', async (req: Request, res: Response) => {
 });
 
 userRouter.get(
-    '/:id/scores',
+    '/:id/:learning_type/scores',
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
+        const learning_type: string = req.params.learning_type;
         let max: number;
         if (req.query.max) {
             max = parseInt(req.query.max as string);
@@ -36,6 +37,7 @@ userRouter.get(
         userModel.findAllLevels(
             id,
             sort,
+            learning_type,
             (err: Error, scores: Array<UserScore>) => {
                 max = max ? max : scores.length;
                 if (err) {
@@ -62,42 +64,21 @@ userRouter.get(
 );
 
 userRouter.get(
-    '/:id/:country_code/score',
+    '/:id/country/play/:learning_type',
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
-        const country_code: string = req.params.country_code;
-        userModel.findOneScore(
+        const learning_type: string = req.params.learning_type;
+        userModel.findNewCountry(
             id,
-            country_code,
-            (err: Error, userScore: UserScore) => {
+            learning_type,
+            (err: Error, country: Country) => {
                 if (err) {
                     return res.status(500).json({ error: err.message });
                 }
-                res.status(200).json({
-                    userScore: userScore,
-                    score: calculateScore(
-                        userScore.succeeded,
-                        userScore.medium,
-                        userScore.failed
-                    )
-                });
+                res.status(200).json({ country: country });
             }
         );
-    }
-);
-
-userRouter.get(
-    '/:id/country/play',
-    tokenMiddleware,
-    async (req: Request, res: Response) => {
-        const id: number = parseInt(req.params.id);
-        userModel.findNewCountry(id, (err: Error, country: Country) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
-            res.status(200).json({ country: country });
-        });
     }
 );
 
@@ -120,27 +101,6 @@ userRouter.post(
                     res.status(200).json({ user: user });
                 });
             }
-        });
-    }
-);
-
-userRouter.post(
-    '/:id/:country_code/score',
-    [tokenMiddleware],
-    async (req: Request, res: Response) => {
-        const id: number = parseInt(req.params.id);
-        const country_code: string = req.params.country_code;
-        //get the user name from the id
-        userModel.findOne(id, (err: Error, user: User) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
-            userModel.createScore(id, user.name, country_code, (err: Error) => {
-                if (err) {
-                    return res.status(500).json({ error: err.message });
-                }
-                res.status(200).send();
-            });
         });
     }
 );
@@ -280,52 +240,18 @@ userRouter.put(
 );
 
 userRouter.put(
-    '/:id/:country_code/score/succeeded',
+    '/:id/:country_code/:learning_type/score/:score',
     [tokenMiddleware],
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
         const country_code: string = req.params.country_code;
+        const learning_type: string = req.params.learning_type;
+        const score: string = req.params.score;
         userModel.updateSucceededScore(
             id,
             country_code,
-            (err: Error, response: OkPacket) => {
-                if (err) {
-                    return res.status(500).json({ error: err.message });
-                }
-                res.status(200).json({ affectedRows: response.affectedRows });
-            }
-        );
-    }
-);
-
-userRouter.put(
-    '/:id/:country_code/score/medium',
-    [tokenMiddleware],
-    async (req: Request, res: Response) => {
-        const id: number = parseInt(req.params.id);
-        const country_code: string = req.params.country_code;
-        userModel.updateMediumScore(
-            id,
-            country_code,
-            (err: Error, response: OkPacket) => {
-                if (err) {
-                    return res.status(500).json({ error: err.message });
-                }
-                res.status(200).json({ affectedRows: response.affectedRows });
-            }
-        );
-    }
-);
-
-userRouter.put(
-    '/:id/:country_code/score/failed',
-    [tokenMiddleware],
-    async (req: Request, res: Response) => {
-        const id: number = parseInt(req.params.id);
-        const country_code: string = req.params.country_code;
-        userModel.updateFailedScore(
-            id,
-            country_code,
+            learning_type,
+            score,
             (err: Error, response: OkPacket) => {
                 if (err) {
                     return res.status(500).json({ error: err.message });

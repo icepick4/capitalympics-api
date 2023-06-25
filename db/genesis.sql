@@ -3,25 +3,43 @@ CREATE TABLE IF NOT EXISTS users (
   id INT(11) NOT NULL AUTO_INCREMENT,
   name VARCHAR(100) NOT NULL,
   password VARCHAR(255) NOT NULL,
-  level INT(11) NOT NULL DEFAULT 0,
+  flag_level INT(11) NOT NULL DEFAULT 0,
+  capital_level INT(11) NOT NULL DEFAULT 0,
+  global_level INT(11) NOT NULL DEFAULT 0,
   last_activity TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
   language VARCHAR(2) NOT NULL DEFAULT 'en',
   PRIMARY KEY (id, name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Init table user_scores
-CREATE TABLE IF NOT EXISTS user_scores (
+-- Init table flag_scores
+CREATE TABLE IF NOT EXISTS flag_scores (
   user_id INT(11) NOT NULL,
   user_name VARCHAR(100) NOT NULL,
   country_code VARCHAR(3) NOT NULL,
   succeeded_streak INT(11) NOT NULL DEFAULT 0,
+  medium_streak INT(11) NOT NULL DEFAULT 0,
   failed_streak INT(11) NOT NULL DEFAULT 0,
   succeeded INT(11) NOT NULL DEFAULT 0,
+  medium INT(11) NOT NULL DEFAULT 0,
   failed INT(11) NOT NULL DEFAULT 0,
   level INT(11) NOT NULL DEFAULT -1,
-  medium INT(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, user_name, country_code),
+  FOREIGN KEY (user_id, user_name) REFERENCES users (id, name) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Init table capital_scores
+CREATE TABLE IF NOT EXISTS capital_scores (
+  user_id INT(11) NOT NULL,
+  user_name VARCHAR(100) NOT NULL,
+  country_code VARCHAR(3) NOT NULL,
+  succeeded_streak INT(11) NOT NULL DEFAULT 0,
   medium_streak INT(11) NOT NULL DEFAULT 0,
+  failed_streak INT(11) NOT NULL DEFAULT 0,
+  succeeded INT(11) NOT NULL DEFAULT 0,
+  medium INT(11) NOT NULL DEFAULT 0,
+  failed INT(11) NOT NULL DEFAULT 0,
+  level INT(11) NOT NULL DEFAULT -1,
   PRIMARY KEY (user_id, user_name, country_code),
   FOREIGN KEY (user_id, user_name) REFERENCES users (id, name) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -34,19 +34,28 @@ export const createScore = (
     country_code: string,
     callback: Function
 ) => {
-    const query =
-        'INSERT INTO user_scores (user_id, user_name, country_code) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE user_name = ?, country_code = ?, level = -1, succeeded = 0, failed = 0, medium = 0, succeeded_streak = 0, failed_streak = 0, medium_streak = 0';
+    const queryCapitals =
+        'INSERT INTO capital_scores (user_id, user_name, country_code) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE user_name = ?, country_code = ?, level = -1, succeeded = 0, failed = 0, medium = 0, succeeded_streak = 0, failed_streak = 0, medium_streak = 0';
+    const queryFlags = queryCapitals.replace('capital', 'flag');
     database.query(
-        query,
+        queryCapitals,
         [user_id, user_name, country_code, user_name, country_code],
         (err, result: OkPacket) => {
             if (err) {
                 callback(err);
-            } else {
-                callback(null);
             }
         }
     );
+    database.query(
+        queryFlags,
+        [user_id, user_name, country_code, user_name, country_code],
+        (err, result: OkPacket) => {
+            if (err) {
+                callback(err);
+            }
+        }
+    );
+    callback(null);
 };
 
 export const connect = async (
@@ -105,8 +114,12 @@ export const exists = (name: string, id: number | null, callback: Function) => {
     });
 };
 
-export const findNewCountry = (id: number, callback: Function) => {
-    const user_scores = 'SELECT * FROM user_scores WHERE user_id = ?';
+export const findNewCountry = (
+    id: number,
+    learning_type: string,
+    callback: Function
+) => {
+    const user_scores = `SELECT * FROM ${learning_type}_scores WHERE user_id = ?`;
     database.query(user_scores, [id], (err, result: RowDataPacket[]) => {
         if (err) {
             callback(err);
@@ -173,10 +186,10 @@ export const findOne = (id: number, callback: Function) => {
 export const findOneScore = (
     id: number,
     country_code: string,
+    learning_type: string,
     callback: Function
 ) => {
-    const query =
-        'SELECT * FROM user_scores WHERE user_id = ? and country_code = ?';
+    const query = `SELECT * FROM ${learning_type}_scores WHERE user_id = ? and country_code = ?`;
 
     database.query(
         query,
@@ -208,11 +221,13 @@ export const findOneScore = (
     );
 };
 
-export const findAllLevels = (id: number, sort: string, callback: Function) => {
-    const query =
-        'SELECT * FROM user_scores WHERE user_id = ? AND level > -1 ORDER BY level ' +
-        sort +
-        ';';
+export const findAllLevels = (
+    id: number,
+    sort: string,
+    learning_type: string,
+    callback: Function
+) => {
+    const query = `SELECT * FROM ${learning_type}_scores WHERE user_id = ? AND level > -1 ORDER BY level ${sort}`;
     database.query(query, [id, sort], (err, result: RowDataPacket[]) => {
         if (err) {
             callback(err);
@@ -275,91 +290,94 @@ export const updateActivity = (
     });
 };
 
-export const updateLevel = (userId: number, countryCode: string) => {
-    const query =
-        'UPDATE user_scores SET level = ? WHERE user_id = ? AND country_code = ?';
-    findOneScore(userId, countryCode, (err: any, result: UserScore) => {
-        if (result) {
-            const level = fromScoreToLevel(
-                calculateScore(result.succeeded, result.medium, result.failed)
-            );
-            database.query(query, [level, userId, countryCode]);
+export const updateLevel = (
+    userId: number,
+    countryCode: string,
+    learning_type: string
+) => {
+    const query = `UPDATE ${learning_type}_scores SET level = ? WHERE user_id = ? AND country_code = ?`;
+    findOneScore(
+        userId,
+        countryCode,
+        learning_type,
+        (err: any, result: UserScore) => {
+            if (result) {
+                const level = fromScoreToLevel(
+                    calculateScore(
+                        result.succeeded,
+                        result.medium,
+                        result.failed
+                    )
+                );
+                database.query(query, [level, userId, countryCode]);
+            }
         }
-    });
+    );
 };
 
-export const updateGlobalLevel = (userId: number) => {
+export const updateGlobalLevel = (userId: number, learning_type: string) => {
     const query = 'UPDATE users SET level = ? WHERE id = ?';
-    findAllLevels(userId, 'ASC', (err: any, result: number[]) => {
-        if (result) {
-            let sum = 0;
-            let counter = 0;
-            for (let level of result) {
-                if (level != -1) {
-                    sum += level;
-                    counter++;
+    findAllLevels(
+        userId,
+        'ASC',
+        learning_type,
+        (err: any, result: number[]) => {
+            if (result) {
+                let sum = 0;
+                let counter = 0;
+                for (let level of result) {
+                    if (level != -1) {
+                        sum += level;
+                        counter++;
+                    }
                 }
+                let avg = sum / counter;
+                if (Number.isNaN(avg)) {
+                    avg = 0;
+                }
+                database.query(query, [avg, userId]);
             }
-            let avg = sum / counter;
-            if (Number.isNaN(avg)) {
-                avg = 0;
-            }
-            database.query(query, [avg, userId]);
         }
-    });
+    );
 };
 
 export const updateSucceededScore = (
     userId: number,
     countryCode: string,
+    learning_type: string,
+    score: string,
     callback: Function
 ) => {
-    const query =
-        'UPDATE user_scores SET succeeded = succeeded + 1, succeeded_streak = succeeded_streak + 1, medium_streak = 0, failed_streak = 0 WHERE user_id = ? AND country_code = ?';
-    database.query(query, [userId, countryCode], (err, result: OkPacket) => {
-        if (err) {
-            callback(err);
-        } else {
-            updateLevel(userId, countryCode);
-            updateGlobalLevel(userId);
-            callback(null, result);
-        }
-    });
-};
+    let reset_score1: string;
+    let reset_score2: string;
 
-export const updateMediumScore = (
-    userId: number,
-    countryCode: string,
-    callback: Function
-) => {
-    const query =
-        'UPDATE user_scores SET medium = medium + 1, medium_streak = medium_streak + 1, succeeded_streak = 0, failed_streak = 0 WHERE user_id = ? AND country_code = ?';
+    switch (score) {
+        case 'succeeded':
+            reset_score1 = 'medium';
+            reset_score2 = 'failed';
+            break;
+        case 'medium':
+            reset_score1 = 'succeeded';
+            reset_score2 = 'failed';
+            break;
+        default:
+            reset_score1 = 'succeeded';
+            reset_score2 = 'medium';
+    }
 
-    database.query(query, [userId, countryCode], (err, result: OkPacket) => {
-        if (err) {
-            callback(err);
-        } else {
-            updateLevel(userId, countryCode);
-            updateGlobalLevel(userId);
-            callback(null, result);
-        }
-    });
-};
-
-export const updateFailedScore = (
-    userId: number,
-    countryCode: string,
-    callback: Function
-) => {
-    const query =
-        'UPDATE user_scores SET failed = failed + 1, failed_streak = failed_streak + 1, succeeded_streak = 0, medium_streak = 0 WHERE user_id = ? AND country_code = ?';
+    const query = `UPDATE ${learning_type}_scores 
+                   SET ${score} = ${score} + 1, 
+                       ${score}_streak = ${score}_streak + 1, 
+                       ${reset_score1}_streak = 0, 
+                       ${reset_score2}_streak = 0 
+                   WHERE user_id = ? AND country_code = ?`;
 
     database.query(query, [userId, countryCode], (err, result: OkPacket) => {
         if (err) {
             callback(err);
         } else {
-            updateLevel(userId, countryCode);
-            updateGlobalLevel(userId);
+            updateLevel(userId, countryCode, learning_type);
+            updateGlobalLevel(userId, learning_type);
             callback(null, result);
         }
     });
