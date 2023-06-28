@@ -58,7 +58,10 @@ userRouter.get(
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(200).json({ score: user.level });
+            res.status(200).json({
+                flag_score: user.flag_level,
+                capital_score: user.capital_level
+            });
         });
     }
 );
@@ -184,7 +187,8 @@ userRouter.post(
                                         completed === countries.length &&
                                         !hasSentResponse
                                     ) {
-                                        user.level = 0;
+                                        user.flag_level = 0;
+                                        user.capital_level = 0;
                                         userModel.update(
                                             user,
                                             id,

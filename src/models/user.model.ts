@@ -82,7 +82,8 @@ export const connect = async (
                         name: row.name,
                         image: row.image,
                         password: row.password,
-                        level: row.level,
+                        flag_level: row.flag_level,
+                        capital_level: row.capital_level,
                         last_activity: last_activity,
                         created_at: row.created_at,
                         language: row.language
@@ -173,7 +174,8 @@ export const findOne = (id: number, callback: Function) => {
                 name: rows[0].name,
                 image: rows[0].image,
                 password: rows[0].password,
-                level: rows[0].level,
+                flag_level: rows[0].flag_level,
+                capital_level: rows[0].capital_level,
                 last_activity: rows[0].last_activity,
                 created_at: rows[0].created_at,
                 language: rows[0].language
@@ -260,11 +262,18 @@ export const findAllLevels = (
 
 export const update = (user: User, userId: number, callback: Function) => {
     const query =
-        'UPDATE users SET name = ?, last_activity = ?, language = ?, level = ? WHERE id = ?';
+        'UPDATE users SET name = ?, last_activity = ?, language = ?, flag_level = ?, capital_level = ? WHERE id = ?';
 
     database.query(
         query,
-        [user.name, user.last_activity, user.language, user.level, userId],
+        [
+            user.name,
+            user.last_activity,
+            user.language,
+            user.flag_level,
+            user.capital_level,
+            userId
+        ],
         (err, result) => {
             if (err) {
                 callback(err);
@@ -316,18 +325,18 @@ export const updateLevel = (
 };
 
 export const updateGlobalLevel = (userId: number, learning_type: string) => {
-    const query = 'UPDATE users SET level = ? WHERE id = ?';
+    const query = `UPDATE users SET ${learning_type}_level = ? WHERE id = ?`;
     findAllLevels(
         userId,
         'ASC',
         learning_type,
-        (err: any, result: number[]) => {
+        (err: any, result: UserScore[]) => {
             if (result) {
                 let sum = 0;
                 let counter = 0;
-                for (let level of result) {
-                    if (level != -1) {
-                        sum += level;
+                for (let user_score of result) {
+                    if (user_score.level != -1) {
+                        sum += user_score.level;
                         counter++;
                     }
                 }

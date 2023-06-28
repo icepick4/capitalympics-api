@@ -51,7 +51,8 @@ export const userTypeMiddleware = (
         typeof user !== 'object' ||
         !('id' in user) ||
         !('name' in user) ||
-        !('level' in user) ||
+        !('flag_level' in user) ||
+        !('capital_level' in user) ||
         !('last_activity' in user) ||
         !('created_at' in user)
     ) {

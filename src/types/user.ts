@@ -3,7 +3,8 @@ export interface User {
     name: string;
     image: string;
     password: string;
-    level: Level;
+    flag_level: Level;
+    capital_level: Level;
     last_activity: string;
     created_at: string;
     language: string;
