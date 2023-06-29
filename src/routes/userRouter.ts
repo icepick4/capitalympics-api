@@ -90,6 +90,7 @@ userRouter.post(
     userTypeMiddleware,
     async (req: Request, res: Response) => {
         const user: User = req.body.user;
+        console.log(user);
         userModel.exists(user.name, null, (err: Error, exists: boolean) => {
             if (err) {
                 return res.status(500).json({ error: err.message });

@@ -12,12 +12,12 @@ import {
 import * as countryModel from './country.model';
 export const create = async (user: User, callback: Function) => {
     const query =
-        'INSERT INTO users (name, password, last_activity) VALUES (?, ?, ?)';
+        'INSERT INTO users (name, password, language, last_activity) VALUES (?, ?, ?, ?)';
     const hashedPassword = await hashPassword(user.password);
     user.password = hashedPassword;
     database.query(
         query,
-        [user.name, user.password, user.last_activity],
+        [user.name, user.password, user.language, user.last_activity],
         (err, result: OkPacket) => {
             if (err) {
                 callback(err);
