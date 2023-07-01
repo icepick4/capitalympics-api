@@ -57,6 +57,16 @@ CREATE TABLE IF NOT EXISTS countries (
   PRIMARY KEY (alpha3Code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS translations (
+id INT(11) NOT NULL AUTO_INCREMENT,
+language VARCHAR(2) NOT NULL,
+capital VARCHAR(255) NOT NULL,
+official_name VARCHAR(255) NOT NULL,
+country_code VARCHAR(3) NOT NULL,
+PRIMARY KEY (id),
+FOREIGN KEY (country_code) REFERENCES countries(alpha3Code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Init table currencies
 CREATE TABLE IF NOT EXISTS currencies (
   country_code VARCHAR(3) NULL,

@@ -3,6 +3,7 @@ import { database } from '../database';
 import { Country } from '../types/country';
 import { User, UserScore } from '../types/user';
 import {
+    Lang,
     calculateScore,
     comparePasswords,
     fromScoreToLevel,
@@ -118,6 +119,7 @@ export const exists = (name: string, id: number | null, callback: Function) => {
 export const findNewCountry = (
     id: number,
     learning_type: string,
+    lang: Lang,
     callback: Function
 ) => {
     const user_scores = `SELECT * FROM ${learning_type}_scores WHERE user_id = ?`;
@@ -145,6 +147,7 @@ export const findNewCountry = (
             const newCountryCode = getNewCountryToPlay(user_scores);
             countryModel.findByCode(
                 newCountryCode,
+                lang,
                 (err: any, result: Country) => {
                     if (err) {
                         callback(err);

@@ -1,6 +1,7 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { database } from '../database';
 import { Country, Currency } from '../types/country';
+import { Lang } from '../utils/common';
 
 export const create = (country: Country, callback: Function) => {
     const query =
@@ -82,7 +83,7 @@ export const findAll = (callback: Function) => {
     });
 };
 
-export const findByCode = (code: string, callback: Function) => {
+export const findByCode = (code: string, lang: Lang, callback: Function) => {
     const query =
         'SELECT * FROM countries JOIN currencies ON countries.alpha3Code = currencies.country_code WHERE countries.alpha3Code = ?';
 
@@ -108,6 +109,17 @@ export const findByCode = (code: string, callback: Function) => {
                 currencies: []
             };
             rows.forEach((row) => {
+                if (lang !== 'en') {
+                    const { official_name, capital } = findTranslations(
+                        row.country_code,
+                        lang
+                    );
+
+                    if (official_name && capital) {
+                        country.official_name = official_name;
+                        country.capital = capital;
+                    }
+                }
                 const currency: Currency = {
                     country_code: row.country_code,
                     currency_name: row.currency_name,
@@ -119,4 +131,29 @@ export const findByCode = (code: string, callback: Function) => {
             callback(null, country);
         }
     });
+};
+
+export const findTranslations = (
+    code: string,
+    lang: Lang
+): { official_name: string; capital: string } => {
+    const query =
+        'SELECT official_name, capital FROM translations WHERE country_code = ? AND language = ?';
+
+    database.query(query, [code, lang], (err, result: RowDataPacket[]) => {
+        if (err) {
+            console.log(err);
+        } else {
+            const rows = <RowDataPacket[]>result;
+            if (rows.length === 0) {
+                return { official_name: '', capital: '' };
+            }
+
+            return {
+                official_name: rows[0].official_name,
+                capital: rows[0].capital
+            };
+        }
+    });
+    return { official_name: '', capital: '' };
 };

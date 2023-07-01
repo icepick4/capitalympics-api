@@ -5,7 +5,7 @@ import * as userModel from '../models/user.model';
 import { Country } from '../types/country';
 import { User, UserScore } from '../types/user';
 import { tokenMiddleware, userTypeMiddleware } from '../utils/authMiddlewares';
-import { getCurrentMySQLDate } from '../utils/common';
+import { Lang, getCurrentMySQLDate } from '../utils/common';
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 
@@ -72,9 +72,14 @@ userRouter.get(
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
         const learning_type: string = req.params.learning_type;
+        let lang: Lang = 'en';
+        if (req.query.lang) {
+            lang = req.query.lang as Lang;
+        }
         userModel.findNewCountry(
             id,
             learning_type,
+            lang,
             (err: Error, country: Country) => {
                 if (err) {
                     return res.status(500).json({ error: err.message });

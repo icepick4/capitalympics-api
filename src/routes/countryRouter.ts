@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import * as countryModel from '../models/country.model';
 import { Country } from '../types/country';
+import { Lang } from '../utils/common';
 
 const countryRouter = express.Router();
 
@@ -36,12 +37,20 @@ countryRouter.get('/', async (req: Request, res: Response) => {
 // });
 
 countryRouter.get('/:code', async (req: Request, res: Response) => {
-    countryModel.findByCode(req.params.code, (err: Error, country: Country) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
+    let lang: Lang = 'en';
+    if (req.query.lang) {
+        lang = req.query.lang as Lang;
+    }
+    countryModel.findByCode(
+        req.params.code,
+        lang,
+        (err: Error, country: Country) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            res.status(200).json({ country: country });
         }
-        res.status(200).json({ country: country });
-    });
+    );
 });
 
 export default countryRouter;
