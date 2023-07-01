@@ -87,7 +87,7 @@ export const findByCode = (code: string, lang: Lang, callback: Function) => {
     const query =
         'SELECT * FROM countries JOIN currencies ON countries.alpha3Code = currencies.country_code WHERE countries.alpha3Code = ?';
 
-    database.query(query, [code], (err, result: RowDataPacket[]) => {
+    database.query(query, [code], async (err, result: RowDataPacket[]) => {
         if (err) {
             callback(err);
         } else {
@@ -108,18 +108,18 @@ export const findByCode = (code: string, lang: Lang, callback: Function) => {
                 alpha3Code: rows[0].alpha3Code,
                 currencies: []
             };
-            rows.forEach((row) => {
-                if (lang !== 'en') {
-                    const { official_name, capital } = findTranslations(
-                        row.country_code,
-                        lang
-                    );
-
-                    if (official_name && capital) {
-                        country.official_name = official_name;
-                        country.capital = capital;
-                    }
+            if (lang !== 'en') {
+                const { name, official_name, capital } = await findTranslations(
+                    country.alpha3Code,
+                    lang
+                );
+                if (name && capital && official_name) {
+                    country.name = name;
+                    country.official_name = official_name;
+                    country.capital = capital;
                 }
+            }
+            rows.forEach((row) => {
                 const currency: Currency = {
                     country_code: row.country_code,
                     currency_name: row.currency_name,
@@ -136,24 +136,26 @@ export const findByCode = (code: string, lang: Lang, callback: Function) => {
 export const findTranslations = (
     code: string,
     lang: Lang
-): { official_name: string; capital: string } => {
+): Promise<{ name: string; official_name: string; capital: string }> => {
     const query =
-        'SELECT official_name, capital FROM translations WHERE country_code = ? AND language = ?';
-
-    database.query(query, [code, lang], (err, result: RowDataPacket[]) => {
-        if (err) {
-            console.log(err);
-        } else {
-            const rows = <RowDataPacket[]>result;
-            if (rows.length === 0) {
-                return { official_name: '', capital: '' };
+        'SELECT name, official_name, capital FROM translations WHERE country_code = ? AND language = ?';
+    return new Promise((resolve, reject) => {
+        database.query(query, [code, lang], (err, result: RowDataPacket[]) => {
+            if (err) {
+                console.log(err);
+                reject(err);
+            } else {
+                const rows = <RowDataPacket[]>result;
+                if (rows.length === 0) {
+                    resolve({ name: '', official_name: '', capital: '' });
+                } else {
+                    resolve({
+                        name: rows[0].name,
+                        official_name: rows[0].official_name,
+                        capital: rows[0].capital
+                    });
+                }
             }
-
-            return {
-                official_name: rows[0].official_name,
-                capital: rows[0].capital
-            };
-        }
+        });
     });
-    return { official_name: '', capital: '' };
 };
