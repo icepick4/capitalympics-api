@@ -10,7 +10,11 @@ countryRouter.get('/', async (req: Request, res: Response) => {
     if (req.query.max) {
         max = parseInt(req.query.max as string);
     }
-    countryModel.findAll((err: Error, countries: Country[]) => {
+    let lang: Lang = 'en';
+    if (req.query.lang) {
+        lang = req.query.lang as Lang;
+    }
+    countryModel.findAll(lang, (err: Error, countries: Country[]) => {
         max = max ? max : countries.length;
         const randomStart = Math.floor(
             Math.random() * (countries.length - max)

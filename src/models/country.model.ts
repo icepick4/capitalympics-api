@@ -31,58 +31,80 @@ export const create = (country: Country, callback: Function) => {
     );
 };
 
-export const findAll = (callback: Function) => {
+export const findAll = (lang: Lang, callback: Function) => {
     const query =
         'SELECT * FROM countries JOIN currencies ON countries.alpha3Code = currencies.country_code ORDER BY countries.name';
-    database.query(query, (err, result) => {
+    const countries: Country[] = [];
+
+    database.query(query, async (err, result) => {
         if (err) {
             callback(err);
+        } else {
+            const rows = <RowDataPacket[]>result;
+            let currentCountry: Country;
+            let lastCountryCode = '';
+
+            for (const country of rows) {
+                currentCountry = {
+                    name: country.name,
+                    official_name: country.official_name,
+                    capital: country.capital,
+                    region: country.region,
+                    subregion: country.subregion,
+                    population: country.population,
+                    google_maps_link: country.google_maps_link,
+                    flag: country.flag,
+                    alpha3Code: country.alpha3Code,
+                    currencies: []
+                };
+
+                if (country.country_code !== lastCountryCode) {
+                    const currency: Currency = {
+                        country_code: country.country_code,
+                        currency_name: country.currency_name,
+                        symbol: country.symbol,
+                        id: country.id
+                    };
+                    currentCountry.currencies.push(currency);
+
+                    if (lang !== 'en') {
+                        try {
+                            const { name, official_name, capital } =
+                                await findTranslations(
+                                    country.alpha3Code,
+                                    lang
+                                );
+                            if (name && capital && official_name) {
+                                currentCountry.name = name;
+                                currentCountry.official_name = official_name;
+                                currentCountry.capital = capital;
+                            }
+                        } catch (err) {
+                            callback(err);
+                            return;
+                        }
+                    }
+
+                    countries.push(currentCountry);
+                }
+
+                if (country.country_code === lastCountryCode) {
+                    const currency: Currency = {
+                        country_code: country.country_code,
+                        currency_name: country.currency_name,
+                        symbol: country.symbol,
+                        id: country.id
+                    };
+                    countries[countries.length - 1].currencies.push(currency);
+                }
+
+                lastCountryCode = country.country_code;
+            }
+
+            callback(null, countries);
         }
-        const rows = <RowDataPacket[]>result;
-        const countries: Country[] = [];
-        let currentCountry: Country;
-        let lastCountryCode = '';
-        rows.forEach((row) => {
-            currentCountry = {
-                name: row.name,
-                official_name: row.official_name,
-                capital: row.capital,
-                region: row.region,
-                subregion: row.subregion,
-                population: row.population,
-                google_maps_link: row.google_maps_link,
-                flag: row.flag,
-                alpha3Code: row.alpha3Code,
-                currencies: []
-            };
-
-            if (row.country_code !== lastCountryCode) {
-                const currency: Currency = {
-                    country_code: row.country_code,
-                    currency_name: row.currency_name,
-                    symbol: row.symbol,
-                    id: row.id
-                };
-                currentCountry.currencies.push(currency);
-                countries.push(currentCountry);
-            }
-
-            if (row.country_code === lastCountryCode) {
-                const currency: Currency = {
-                    country_code: row.country_code,
-                    currency_name: row.currency_name,
-                    symbol: row.symbol,
-                    id: row.id
-                };
-                countries[countries.length - 1].currencies.push(currency);
-            }
-
-            lastCountryCode = row.country_code;
-        });
-        callback(null, countries);
     });
 };
-
 export const findByCode = (code: string, lang: Lang, callback: Function) => {
     const query =
         'SELECT * FROM countries JOIN currencies ON countries.alpha3Code = currencies.country_code WHERE countries.alpha3Code = ?';

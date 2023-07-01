@@ -169,7 +169,7 @@ userRouter.post(
                 return res.status(500).json({ error: err.message });
             }
             //init every user_scores for every country to -1
-            countryModel.findAll((err: any, countries: Country[]) => {
+            countryModel.findAll('en', (err: any, countries: Country[]) => {
                 if (err) {
                     return res.status(500).json({ error: err.message });
                 } else {
