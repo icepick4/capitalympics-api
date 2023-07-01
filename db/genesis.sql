@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS countries (
   google_maps_link VARCHAR(255) NOT NULL,
   flag VARCHAR(255) NOT NULL,
   alpha3Code VARCHAR(3) NOT NULL,
-  PRIMARY KEY (alpha3Code)
+  PRIMARY KEY (alpha3Code) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Init table translations
