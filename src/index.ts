@@ -6,15 +6,17 @@ import userRouter from './routes/userRouter';
 import { corsMiddleware } from './utils/authMiddlewares';
 const app = express();
 const cors = require('cors');
+const helmet = require('helmet');
 
 dotenv.config();
 
 app.use(cors());
+app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use('/users', corsMiddleware, userRouter);
-app.use('/countries', corsMiddleware, countryRouter);
+app.use('/api/users', corsMiddleware, userRouter);
+app.use('/api/countries', corsMiddleware, countryRouter);
 
 app.get('*', (_req, res) => {
     res.status(404).json({
