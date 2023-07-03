@@ -76,10 +76,15 @@ userRouter.get(
         if (req.query.lang) {
             lang = req.query.lang as Lang;
         }
+        let region: string = 'World';
+        if (req.query.region) {
+            region = req.query.region as string;
+        }
         userModel.findNewCountry(
             id,
             learning_type,
             lang,
+            region,
             (err: Error, country: Country) => {
                 if (err) {
                     return res.status(500).json({ error: err.message });

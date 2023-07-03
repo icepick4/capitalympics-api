@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS flag_scores (
   failed INT(11) NOT NULL DEFAULT 0,
   level INT(11) NOT NULL DEFAULT -1,
   PRIMARY KEY (user_id, user_name, country_code),
-  FOREIGN KEY (user_id, user_name) REFERENCES users (id, name) ON UPDATE CASCADE ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Init table capital_scores
@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS capital_scores (
   medium INT(11) NOT NULL DEFAULT 0,
   failed INT(11) NOT NULL DEFAULT 0,
   level INT(11) NOT NULL DEFAULT -1,
-  PRIMARY KEY (user_id, user_name, country_code),
-  FOREIGN KEY (user_id, user_name) REFERENCES users (id, name) ON UPDATE CASCADE ON DELETE CASCADE
+  PRIMARY KEY (user_id, country_code),
+  FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Init table countries

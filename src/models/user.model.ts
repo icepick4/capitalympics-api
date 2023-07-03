@@ -120,44 +120,54 @@ export const findNewCountry = (
     id: number,
     learning_type: string,
     lang: Lang,
+    region: string,
     callback: Function
 ) => {
-    const user_scores = `SELECT * FROM ${learning_type}_scores WHERE user_id = ?`;
-    database.query(user_scores, [id], (err, result: RowDataPacket[]) => {
-        if (err) {
-            callback(err);
-        } else {
-            const rows = <RowDataPacket[]>result;
-            const user_scores: UserScore[] = [];
-            for (let row of rows) {
-                const userScore: UserScore = {
-                    user_id: row.user_id,
-                    user_name: row.user_name,
-                    country_code: row.country_code,
-                    succeeded: row.succeeded,
-                    medium: row.medium,
-                    failed: row.failed,
-                    succeeded_streak: row.succeeded_streak,
-                    medium_streak: row.medium_streak,
-                    failed_streak: row.failed_streak,
-                    level: row.level
-                };
-                user_scores.push(userScore);
-            }
-            const newCountryCode = getNewCountryToPlay(user_scores);
-            countryModel.findByCode(
-                newCountryCode,
-                lang,
-                (err: any, result: Country) => {
-                    if (err) {
-                        callback(err);
-                    } else {
-                        callback(null, result);
-                    }
+    const user_scores =
+        region === 'World'
+            ? `SELECT * FROM ${learning_type}_scores WHERE user_id = ?`
+            : `SELECT * FROM ${learning_type}_scores
+            JOIN countries ON ${learning_type}_scores.country_code COLLATE utf8mb4_unicode_ci = countries.alpha3Code COLLATE utf8mb4_unicode_ci
+            WHERE ${learning_type}_scores.user_id = ? AND countries.region = ?`;
+    database.query(
+        user_scores,
+        [id, region],
+        (err, result: RowDataPacket[]) => {
+            if (err) {
+                callback(err);
+            } else {
+                const rows = <RowDataPacket[]>result;
+                const user_scores: UserScore[] = [];
+                for (let row of rows) {
+                    const userScore: UserScore = {
+                        user_id: row.user_id,
+                        user_name: row.user_name,
+                        country_code: row.country_code,
+                        succeeded: row.succeeded,
+                        medium: row.medium,
+                        failed: row.failed,
+                        succeeded_streak: row.succeeded_streak,
+                        medium_streak: row.medium_streak,
+                        failed_streak: row.failed_streak,
+                        level: row.level
+                    };
+                    user_scores.push(userScore);
                 }
-            );
+                const newCountryCode = getNewCountryToPlay(user_scores);
+                countryModel.findByCode(
+                    newCountryCode,
+                    lang,
+                    (err: any, result: Country) => {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            callback(null, result);
+                        }
+                    }
+                );
+            }
         }
-    });
+    );
 };
 
 export const findOne = (id: number, callback: Function) => {
