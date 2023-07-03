@@ -97,9 +97,12 @@ export const connect = async (
     });
 };
 
-export const exists = (name: string, callback: Function) => {
-    const query = 'SELECT * FROM users WHERE name = ?';
-    database.query(query, [name], (err, result) => {
+export const exists = (name: string, id: number | null, callback: Function) => {
+    const query =
+        id == null
+            ? 'SELECT * FROM users WHERE name = ?'
+            : 'SELECT * FROM users WHERE name = ? AND id != ?';
+    database.query(query, [name, id], (err, result) => {
         if (err) {
             callback(err);
         } else {
