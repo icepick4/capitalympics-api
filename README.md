@@ -32,64 +32,99 @@ JWT_TOKEN=token
 (or see [example](.env.example))
   
 - A mysql database with the correct tables :
+
   <details>
   <summary>users :</summary>
-
-    | Name | Type | Key |
-    | ---- | ---- | --- |
-    | id   | int  | PK  |
-    | name   | char | ∅ |
-    | password   | char  | ∅ |
-    | level (-1 to 10)   | int  | ∅ |
-    | last_activity | date | ∅ |
-
+  
+  | Name | Type | Key |
+  | ---- | ---- | --- |
+  | id   | int  | PK  |
+  | name   | varchar(100) |  |
+  | password   | varchar(255)  |  |
+  | flag_level   | int  |  |
+  | capital_level   | int  |  |
+  | last_activity | timestamp  |  |
+  | created_at | timestamp  |  |
+  | language | varchar(2)  |  |
+  
   </details>
-    
+
   <details>
-  <summary>userScores :</summary>
+  <summary>flag_scores :</summary>
   
-    | Name | Type | Key |
-    | ---- | ---- | --- |
-    | user_id   | int  | PK FK |
-    | country_code   | char(3)  | PK FK |
-    | succeeded_streak   | int | ∅ |
-    | succeeded   | int  | ∅ |
-    | medium_streak   | int  | ∅ |
-    | medium | int | ∅ |
-    | failed_streak   | int  | ∅ |
-    | failed | int | ∅ |
-    | level (-1 to 10) | int | ∅ |
-    
+  | Name | Type | Key |
+  | ---- | ---- | --- |
+  | user_id   | int  | PK FK |
+  | user_name   | varchar(100)  | PK |
+  | country_code   | varchar(3)  | PK |
+  | succeeded_streak   | int  |  |
+  | medium_streak   | int  |  |
+  | failed_streak   | int  |  |
+  | succeeded   | int  |  |
+  | medium   | int  |  |
+  | failed   | int  |  |
+  | level   | int  |  |
+  
   </details>
   
+  <details>
+  <summary>capital_scores :</summary>
+  
+  | Name | Type | Key |
+  | ---- | ---- | --- |
+  | user_id   | int  | PK FK |
+  | user_name   | varchar(100)  | PK |
+  | country_code   | varchar(3)  | PK |
+  | succeeded_streak   | int  |  |
+  | medium_streak   | int  |  |
+  | failed_streak   | int  |  |
+  | succeeded   | int  |  |
+  | medium   | int  |  |
+  | failed   | int  |  |
+  | level   | int  |  |
+  
+  </details>
+    
   <details>
   <summary>countries :</summary>
   
-    | Name | Type | Key |
-    | ---- | ---- | --- |
-    | name | char |  ∅  |
-    | official_name | char |  ∅  |
-    | capital | char |  ∅  |
-    | region | char |  ∅  |
-    | subregion | char |  ∅  |
-    | population | int |  ∅  |
-    | googlemaps | char |  ∅  |
-    | flag | char |  ∅  |
-    | alpha3Code | char |  PK  |
-    | currencies | char |  ∅  |
-    
+  | Name | Type | Key |
+  | ---- | ---- | --- |
+  | name | varchar(255) |  |
+  | official_name | varchar(255) |  |
+  | capital | varchar(255) |  |
+  | region | varchar(255) |  |
+  | subregion | varchar(255) |  |
+  | population | int |  |
+  | google_maps_link | varchar(255) |  |
+  | flag | varchar(255) |  |
+  | alpha3Code | varchar(3) | PK |
+  
+  </details>
+  
+  <details>
+  <summary>translations :</summary>
+  
+  | Name | Type | Key |
+  | ---- | ---- | --- |
+  | language | varchar(2) | PK |
+  | capital | varchar(255) | |
+  | name | varchar(255) | |
+  | official_name | varchar(255) | |
+  | country_code | varchar(3) | PK FK |
+
   </details>
   
   <details>
   <summary>currencies :</summary>
   
-    | Name | Type | Key |
-    | ---- | ---- | --- |
-    | id | int |  PK  |
-    | symbol | char | ∅  |
-    | currency_name | char | ∅  |
-    | country_code | char(3) | FK  |
-    
+  | Name | Type | Key |
+  | ---- | ---- | --- |
+  | country_code | varchar(3) | FK |
+  | currency_name | varchar(100) |  |
+  | symbol | varchar(100) |  |
+  | id | int | PK |
+
   </details>
   
 ## Run the api
