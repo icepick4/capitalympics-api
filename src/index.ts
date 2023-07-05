@@ -1,14 +1,16 @@
-import * as bodyParser from 'body-parser';
+import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import express from 'express';
+import express, { Errback, NextFunction, Request, Response } from 'express';
+import helmet from 'helmet';
+
 import countryRouter from './routes/countryRouter';
 import userRouter from './routes/userRouter';
 import { corsMiddleware } from './utils/authMiddlewares';
-const app = express();
-const cors = require('cors');
-const helmet = require('helmet');
 
 dotenv.config();
+
+const app = express();
+const cors = require('cors');
 
 app.use(cors());
 app.use(helmet());
@@ -18,14 +20,52 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api/users', corsMiddleware, userRouter);
 app.use('/api/countries', corsMiddleware, countryRouter);
 
-app.get('*', (_req, res) => {
+app.get('*', (_req: Request, res: Response) => {
     res.status(404).json({
         error: 'Not found',
         message:
-            'Read the documentation : https://github.com/icepick4/capitalympics-api'
+            'Read the documentation: https://github.com/icepick4/capitalympics-api'
     });
 });
 
-app.listen(process.env.PORT, () => {
-    console.log(`Server is running on http://localhost:${process.env.PORT}`);
+// Gestionnaire d'erreurs global
+app.use((err: Errback, _req: Request, res: Response, _next: NextFunction) => {
+    console.error(err); // Affiche l'erreur dans la console
+
+    // Répondez avec un code d'erreur approprié et un message d'erreur générique
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: 'Something went wrong. Please try again later.'
+    });
 });
+
+const startServer = (): void => {
+    app.listen(process.env.PORT, () => {
+        console.log(
+            `Server is running on http://localhost:${process.env.PORT}`
+        );
+    });
+};
+
+// Redémarrez le serveur en cas d'échec
+const restartServer = (): void => {
+    console.log('Restarting server...');
+    startServer();
+};
+
+// Démarrez le serveur
+startServer();
+
+// Surveillez les erreurs non capturées et redémarrez le serveur en cas d'échec
+process.on('uncaughtException', (err: Error) => {
+    console.error('Uncaught Exception:', err);
+    restartServer();
+});
+
+process.on(
+    'unhandledRejection',
+    (reason: unknown, _promise: Promise<unknown>) => {
+        console.error('Unhandled Rejection:', reason);
+        restartServer();
+    }
+);
