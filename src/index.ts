@@ -30,9 +30,8 @@ app.get('*', (_req: Request, res: Response) => {
 
 // Gestionnaire d'erreurs global
 app.use((err: Errback, _req: Request, res: Response, _next: NextFunction) => {
-    console.error(err); // Affiche l'erreur dans la console
+    console.error(err);
 
-    // Répondez avec un code d'erreur approprié et un message d'erreur générique
     res.status(500).json({
         error: 'Internal Server Error',
         message: 'Something went wrong. Please try again later.'
@@ -47,16 +46,13 @@ const startServer = (): void => {
     });
 };
 
-// Redémarrez le serveur en cas d'échec
 const restartServer = (): void => {
     console.log('Restarting server...');
     startServer();
 };
 
-// Démarrez le serveur
 startServer();
 
-// Surveillez les erreurs non capturées et redémarrez le serveur en cas d'échec
 process.on('uncaughtException', (err: Error) => {
     console.error('Uncaught Exception:', err);
     restartServer();
