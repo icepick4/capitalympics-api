@@ -1,11 +1,12 @@
 import express, { Request, Response } from 'express';
+import { DateTime } from 'luxon';
 import { OkPacket } from 'mysql2';
 import * as countryModel from '../models/country.model';
 import * as userModel from '../models/user.model';
 import { Country } from '../types/country';
 import { User, UserScore } from '../types/user';
 import { tokenMiddleware, userTypeMiddleware } from '../utils/authMiddlewares';
-import { Lang, getCurrentMySQLDate } from '../utils/common';
+import { Lang } from '../utils/common';
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 
@@ -149,7 +150,9 @@ userRouter.post(
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
-        userModel.updateActivity(id, getCurrentMySQLDate(), (err: Error) => {
+        const now = DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss');
+
+        userModel.updateActivity(id, now, (err: Error) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
@@ -233,8 +236,9 @@ userRouter.put(
     [userTypeMiddleware, tokenMiddleware],
     async (req: Request, res: Response) => {
         const user: User = req.body.user;
-        user.last_activity = getCurrentMySQLDate();
         const userId: number = parseInt(req.params.id);
+        user.last_activity = DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss');
+
         userModel.exists(user.name, user.id, (err: Error, exists: boolean) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
