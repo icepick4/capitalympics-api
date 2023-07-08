@@ -14,7 +14,8 @@ export const comparePasswords = async (
     return await bcrypt.compare(password, hashedPassword);
 };
 
-export type Lang = 'en' | 'fr' | 'es';
+export const Languages = ['en', 'fr', 'es', 'it'] as const;
+export type Lang = (typeof Languages)[number];
 
 export const calculateScore = (
     succeeded_count: number,

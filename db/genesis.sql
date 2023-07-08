@@ -70,10 +70,15 @@ CREATE TABLE IF NOT EXISTS translations (
 
 -- Init table currencies
 CREATE TABLE IF NOT EXISTS currencies (
-  country_code VARCHAR(3) NULL,
-  currency_name VARCHAR(100) NULL,
+  name VARCHAR(100) NULL,
   symbol VARCHAR(100) NULL,
   id INT(11) NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (id),
-  FOREIGN KEY (country_code) REFERENCES countries(alpha3Code)
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Init table country_currencies
+CREATE TABLE IF NOT EXISTS country_currencies (
+  country_id  INT(11) NOT NULL, 
+  currency_id INT(11) NOT NULL,
+  PRIMARY KEY (country_id, currency_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

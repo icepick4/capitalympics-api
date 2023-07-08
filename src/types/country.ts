@@ -13,7 +13,7 @@ export interface Country {
 
 export interface Currency {
     country_code: string;
-    currency_name: string;
+    name: string;
     symbol: string;
     id: number;
 }
