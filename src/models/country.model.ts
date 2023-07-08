@@ -37,7 +37,7 @@ export const findAll = (lang: Lang, callback: Function) => {
         ? (lang as Lang)
         : defaultLanguage;
     const query =
-        'SELECT countries.*, translations.name, translations.official_name, translations.capital, currencies.* ' +
+        'SELECT countries.*, translations.*, currencies.symbol, currencies.name AS currency_name ' +
         'FROM countries ' +
         'JOIN currencies ON countries.alpha3Code = currencies.country_code ' +
         'LEFT JOIN translations ON countries.alpha3Code = translations.country_code AND translations.language = ? ' +
@@ -50,7 +50,6 @@ export const findAll = (lang: Lang, callback: Function) => {
             const rows = <RowDataPacket[]>result;
             const countries: Country[] = [];
             let currentCountry: Country | undefined;
-
             for (const country of rows) {
                 if (
                     !currentCountry ||
@@ -69,17 +68,6 @@ export const findAll = (lang: Lang, callback: Function) => {
                         currencies: []
                     };
 
-                    if (
-                        lang !== 'en' &&
-                        country.name &&
-                        country.capital &&
-                        country.official_name
-                    ) {
-                        currentCountry.name = country.name;
-                        currentCountry.capital = country.capital;
-                        currentCountry.official_name = country.official_name;
-                    }
-
                     countries.push(currentCountry);
                 }
 
@@ -89,7 +77,9 @@ export const findAll = (lang: Lang, callback: Function) => {
                     symbol: country.symbol,
                     id: country.id
                 };
-                currentCountry.currencies.push(currency);
+                if (!currentCountry.currencies.includes(currency)) {
+                    currentCountry.currencies.push(currency);
+                }
             }
 
             callback(null, countries);
@@ -103,7 +93,7 @@ export const findByCode = (code: string, lang: Lang, callback: Function) => {
         ? (lang as Lang)
         : defaultLanguage;
     const query =
-        'SELECT countries.*, translations.name, translations.official_name, translations.capital, currencies.* ' +
+        'SELECT countries.*, translations.*, currencies.* ' +
         'FROM countries ' +
         'JOIN currencies ON countries.alpha3Code = currencies.country_code ' +
         'LEFT JOIN translations ON countries.alpha3Code = translations.country_code AND translations.language = ? ' +
