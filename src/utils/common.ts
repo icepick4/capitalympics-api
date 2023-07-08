@@ -112,15 +112,6 @@ export const getLevelName = (level: Level): string => {
     }
 };
 
-export const getCurrentMySQLDate = (): string => {
-    let date = new Date();
-    //translate to mysql date
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000)
-        .toISOString()
-        .slice(0, 19)
-        .replace('T', ' ');
-};
-
 export const getNewCountryToPlay = (userScores: UserScore[]): string => {
     //userScores are sorted by level (level between -1 and 10)
     const lowPartWeight = 0.8;
