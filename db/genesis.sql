@@ -45,28 +45,25 @@ CREATE TABLE IF NOT EXISTS capital_scores (
 
 -- Init table countries
 CREATE TABLE IF NOT EXISTS countries (
-  name VARCHAR(255) NOT NULL,
-  official_name VARCHAR(255) NOT NULL,
-  capital VARCHAR(255) NOT NULL,
+  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  code VARCHAR(3) NOT NULL UNIQUE,
   region VARCHAR(255) NOT NULL,
   subregion VARCHAR(255) NOT NULL,
-  population INT(11) NOT NULL,
+  population INT(11) UNSIGNED NOT NULL,
   google_maps_link VARCHAR(255) NOT NULL,
   flag VARCHAR(255) NOT NULL,
-  alpha3Code VARCHAR(3) NOT NULL,
-  PRIMARY KEY (alpha3Code) ON UPDATE CASCADE
+  PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Init table translations
 CREATE TABLE IF NOT EXISTS translations (
+  country_id INT(10) UNSIGNED NOT NULL,
   language VARCHAR(2) NOT NULL,
-  capital VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
+  capital VARCHAR(255) NOT NULL,
   official_name VARCHAR(255) NOT NULL,
-  country_code VARCHAR(3) NOT NULL,
-  PRIMARY KEY (country_code, language),
-  FOREIGN KEY (country_code) REFERENCES countries(alpha3Code)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  PRIMARY KEY (country_id, language)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Init table currencies
 CREATE TABLE IF NOT EXISTS currencies (

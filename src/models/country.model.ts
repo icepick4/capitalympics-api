@@ -93,7 +93,7 @@ export const findByCode = (code: string, lang: Lang, callback: Function) => {
         ? (lang as Lang)
         : defaultLanguage;
     const query =
-        'SELECT countries.*, translations.*, currencies.* ' +
+        'SELECT countries.*, translations.*, currencies.symbol, currencies.name AS currency_name ' +
         'FROM countries ' +
         'JOIN currencies ON countries.alpha3Code = currencies.country_code ' +
         'LEFT JOIN translations ON countries.alpha3Code = translations.country_code AND translations.language = ? ' +
