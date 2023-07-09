@@ -3,8 +3,10 @@ import express, { Errback, NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import { ENV } from './env';
 
+import continentRouter from './routes/continentRouter';
 import countryRouter from './routes/countryRouter';
 import userRouter from './routes/userRouter';
+
 import { corsMiddleware } from './utils/authMiddlewares';
 
 const app = express();
@@ -16,6 +18,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use('/api/users', corsMiddleware, userRouter);
+app.use('/api/continents', corsMiddleware, continentRouter);
 app.use('/api/countries', corsMiddleware, countryRouter);
 
 app.get('*', (_req: Request, res: Response) => {
