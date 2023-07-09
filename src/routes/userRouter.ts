@@ -1,12 +1,14 @@
 import express, { Request, Response } from 'express';
 import { DateTime } from 'luxon';
 import { OkPacket } from 'mysql2';
+import { ENV } from '../env';
 import * as countryModel from '../models/country.model';
 import * as userModel from '../models/user.model';
 import { Country } from '../types/country';
 import { User, UserScore } from '../types/user';
 import { tokenMiddleware, userTypeMiddleware } from '../utils/authMiddlewares';
 import { Lang } from '../utils/common';
+
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 
@@ -136,7 +138,7 @@ userRouter.post('/connect/', async (req: Request, res: Response) => {
                     id: user.id,
                     created_at: user.created_at
                 },
-                process.env.JWT_TOKEN,
+                ENV.JWT_TOKEN,
                 { expiresIn: 60 * 60 * 4 }
             );
             user.password = '';

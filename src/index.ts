@@ -1,13 +1,11 @@
 import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
 import express, { Errback, NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
+import { ENV } from './env';
 
 import countryRouter from './routes/countryRouter';
 import userRouter from './routes/userRouter';
 import { corsMiddleware } from './utils/authMiddlewares';
-
-dotenv.config();
 
 const app = express();
 const cors = require('cors');
@@ -39,9 +37,9 @@ app.use((err: Errback, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 const startServer = (): void => {
-    app.listen(process.env.PORT, () => {
+    app.listen(ENV.PORT, () => {
         console.log(
-            `Server is running on http://localhost:${process.env.PORT}`
+            `Server is running on http://localhost:${ENV.PORT}`
         );
     });
 };

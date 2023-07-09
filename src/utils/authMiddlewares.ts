@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
+import { ENV } from '../env';
 import { User } from '../types/user';
 const jwt = require('jsonwebtoken');
+
 export const tokenMiddleware = (
     req: Request,
     res: Response,
@@ -17,7 +19,7 @@ export const tokenMiddleware = (
         return res.status(401).send({ message: 'Token missing' });
     }
     try {
-        const decoded = jwt.verify(token, process.env.JWT_TOKEN);
+        const decoded = jwt.verify(token, ENV.JWT_TOKEN);
         if (decoded.id != id) {
             return res.status(403).send({ message: 'Forbidden' });
         }

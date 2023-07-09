@@ -1,30 +1,38 @@
 import express, { Request, Response } from 'express';
+import { z } from 'zod';
 import * as countryModel from '../models/country.model';
 import { Country } from '../types/country';
-import { Lang } from '../utils/common';
+import { Lang, Languages } from '../utils/common';
 
 const countryRouter = express.Router();
 
 countryRouter.get('/', async (req: Request, res: Response) => {
-    let max: number;
-    if (req.query.max) {
-        max = parseInt(req.query.max as string);
+    const QuerySchema = z.object({
+        max: z.string().transform(value => Number(value))
+            .refine(value => !isNaN(value) && value > 0, { message: 'The max parameter must be a positive number' })
+            .optional(),
+        lang: z.enum(Languages).default('en'),
+    });
+
+    const result = QuerySchema.safeParse(req.query);
+    if (!result.success) {
+        return res.status(406).send(result.error);
     }
-    let lang: Lang = 'en';
-    if (req.query.lang) {
-        lang = req.query.lang as Lang;
-    }
+
+    let { lang, max } = result.data;
+
     countryModel.findAll(lang, (err: Error, countries: Country[]) => {
-        max = max ? max : countries.length;
-        const randomStart = Math.floor(
-            Math.random() * (countries.length - max)
-        );
+        max ??= countries.length;
+        const randomStart = Math.floor(Math.random() * (countries.length - max));
+
         if (max != countries.length) {
             countries = countries.slice(randomStart, randomStart + max);
         }
+
         if (err) {
             return res.status(500).json({ error: err.message });
         }
+
         res.status(200).json({ countries: countries });
     });
 });
