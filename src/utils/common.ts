@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Level, UserScore } from '../types/user';
 
 const bcrypt = require('bcrypt');
@@ -15,6 +16,7 @@ export const comparePasswords = async (
 };
 
 export const Languages = ['en', 'fr', 'es', 'it'] as const;
+export const DefaultLang = 'en' as const;
 export type Lang = (typeof Languages)[number];
 
 export const calculateScore = (
@@ -128,3 +130,18 @@ export const getNewCountryToPlay = (userScores: UserScore[]): string => {
     return secondHalf[Math.floor(Math.random() * secondHalf.length)]
         .country_code;
 };
+
+export function t(translations: Prisma.JsonValue, lang: Lang): string|null
+{
+    if (
+        translations === null ||
+        typeof translations !== 'object' ||
+        Array.isArray(translations)
+    ) {
+        return null;
+    }
+
+    return (translations[lang] as string|null)
+        ?? (translations[DefaultLang] as string|null)
+        ?? null;
+}
