@@ -53,8 +53,8 @@ export const userTypeMiddleware = (
         typeof user !== 'object' ||
         !('id' in user) ||
         !('name' in user) ||
-        !('flag_level' in user) ||
-        !('capital_level' in user) ||
+        !('flag_score' in user) ||
+        !('capital_score' in user) ||
         !('last_activity' in user) ||
         !('created_at' in user)
     ) {
@@ -92,7 +92,7 @@ export const userScoreTypeMiddleware = (
         !('failed_streak' in userScore) ||
         !('succeeded' in userScore) ||
         !('failed' in userScore) ||
-        !('level' in userScore)
+        !('score' in userScore)
     ) {
         return res.status(400).send('Invalid userScore object');
     }

@@ -37,7 +37,7 @@ userRouter.get(
         } else {
             sort = 'DESC';
         }
-        userModel.findAllLevels(
+        userModel.findAllScores(
             id,
             sort,
             learning_type,
@@ -62,8 +62,8 @@ userRouter.get(
                 return res.status(500).json({ error: err.message });
             }
             res.status(200).json({
-                flag_score: user.flag_level,
-                capital_score: user.capital_level
+                flag_score: user.flag_score,
+                capital_score: user.capital_score
             });
         });
     }
@@ -202,8 +202,8 @@ userRouter.post(
                                         completed === countries.length &&
                                         !hasSentResponse
                                     ) {
-                                        user.flag_level = 0;
-                                        user.capital_level = 0;
+                                        user.flag_score = 0;
+                                        user.capital_score = 0;
                                         userModel.update(
                                             user,
                                             id,

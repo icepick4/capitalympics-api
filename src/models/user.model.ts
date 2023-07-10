@@ -6,7 +6,6 @@ import {
     Lang,
     calculateScore,
     comparePasswords,
-    fromScoreToLevel,
     getNewCountryToPlay,
     hashPassword
 } from '../utils/common';
@@ -36,7 +35,7 @@ export const createScore = (
     callback: Function
 ) => {
     const queryCapitals =
-        'INSERT INTO capital_scores (user_id, user_name, country_code) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE user_name = ?, country_code = ?, level = -1, succeeded = 0, failed = 0, medium = 0, succeeded_streak = 0, failed_streak = 0, medium_streak = 0';
+        'INSERT INTO capital_scores (user_id, user_name, country_code) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE user_name = ?, country_code = ?, score = -1, succeeded = 0, failed = 0, medium = 0, succeeded_streak = 0, failed_streak = 0, medium_streak = 0';
     const queryFlags = queryCapitals.replace('capital', 'flag');
     database.query(
         queryCapitals,
@@ -83,8 +82,8 @@ export const connect = async (
                         name: row.name,
                         image: row.image,
                         password: row.password,
-                        flag_level: row.flag_level,
-                        capital_level: row.capital_level,
+                        flag_score: row.flag_score,
+                        capital_score: row.capital_score,
                         last_activity: last_activity,
                         created_at: row.created_at,
                         language: row.language
@@ -129,7 +128,7 @@ export const findNewCountry = (
             : `SELECT * FROM ${learning_type}_scores
             JOIN countries ON ${learning_type}_scores.country_code COLLATE utf8mb4_unicode_ci = countries.alpha3Code COLLATE utf8mb4_unicode_ci
             WHERE ${learning_type}_scores.user_id = ? AND countries.region = ?`;
-    query += ' ORDER BY level ASC';
+    query += ' ORDER BY score ASC';
     database.query(query, [id, region], (err, result: RowDataPacket[]) => {
         if (err) {
             callback(err);
@@ -147,7 +146,7 @@ export const findNewCountry = (
                     succeeded_streak: row.succeeded_streak,
                     medium_streak: row.medium_streak,
                     failed_streak: row.failed_streak,
-                    level: row.level
+                    score: row.score
                 };
                 user_scores.push(userScore);
             }
@@ -184,8 +183,8 @@ export const findOne = (id: number, callback: Function) => {
                 name: rows[0].name,
                 image: rows[0].image,
                 password: rows[0].password,
-                flag_level: rows[0].flag_level,
-                capital_level: rows[0].capital_level,
+                flag_score: rows[0].flag_score,
+                capital_score: rows[0].capital_score,
                 last_activity: rows[0].last_activity,
                 created_at: rows[0].created_at,
                 language: rows[0].language
@@ -225,7 +224,7 @@ export const findOneScore = (
                     medium_streak: rows[0].medium_streak,
                     failed: rows[0].failed,
                     failed_streak: rows[0].failed_streak,
-                    level: rows[0].level
+                    score: rows[0].score
                 };
                 callback(null, userScore);
             }
@@ -233,13 +232,13 @@ export const findOneScore = (
     );
 };
 
-export const findAllLevels = (
+export const findAllScores = (
     id: number,
     sort: string,
     learning_type: string,
     callback: Function
 ) => {
-    const query = `SELECT * FROM ${learning_type}_scores WHERE user_id = ? AND level > -1 ORDER BY level ${sort}`;
+    const query = `SELECT * FROM ${learning_type}_scores WHERE user_id = ? AND score > -1 ORDER BY score ${sort}`;
     database.query(query, [id, sort], (err, result: RowDataPacket[]) => {
         if (err) {
             callback(err);
@@ -249,7 +248,7 @@ export const findAllLevels = (
                 callback(null, []);
                 return;
             }
-            let levels: UserScore[] = [];
+            let scores: UserScore[] = [];
             for (let row of rows) {
                 let userScore: UserScore = {
                     user_id: row.user_id,
@@ -261,18 +260,18 @@ export const findAllLevels = (
                     medium_streak: row.medium_streak,
                     failed: row.failed,
                     failed_streak: row.failed_streak,
-                    level: row.level
+                    score: row.score
                 };
-                levels.push(userScore);
+                scores.push(userScore);
             }
-            callback(null, levels);
+            callback(null, scores);
         }
     });
 };
 
 export const update = (user: User, userId: number, callback: Function) => {
     const query =
-        'UPDATE users SET name = ?, last_activity = ?, language = ?, flag_level = ?, capital_level = ? WHERE id = ?';
+        'UPDATE users SET name = ?, last_activity = ?, language = ?, flag_score = ?, capital_score = ? WHERE id = ?';
 
     database.query(
         query,
@@ -280,8 +279,8 @@ export const update = (user: User, userId: number, callback: Function) => {
             user.name,
             user.last_activity,
             user.language,
-            user.flag_level,
-            user.capital_level,
+            user.flag_score,
+            user.capital_score,
             userId
         ],
         (err, result) => {
@@ -309,34 +308,32 @@ export const updateActivity = (
     });
 };
 
-export const updateLevel = (
+export const updateScore = (
     userId: number,
     countryCode: string,
     learning_type: string
 ) => {
-    const query = `UPDATE ${learning_type}_scores SET level = ? WHERE user_id = ? AND country_code = ?`;
+    const query = `UPDATE ${learning_type}_scores SET score = ? WHERE user_id = ? AND country_code = ?`;
     findOneScore(
         userId,
         countryCode,
         learning_type,
         (err: any, result: UserScore) => {
             if (result) {
-                const level = fromScoreToLevel(
-                    calculateScore(
-                        result.succeeded,
-                        result.medium,
-                        result.failed
-                    )
+                const score = calculateScore(
+                    result.succeeded,
+                    result.medium,
+                    result.failed
                 );
-                database.query(query, [level, userId, countryCode]);
+                database.query(query, [score, userId, countryCode]);
             }
         }
     );
 };
 
-export const updateGlobalLevel = (userId: number, learning_type: string) => {
-    const query = `UPDATE users SET ${learning_type}_level = ? WHERE id = ?`;
-    findAllLevels(
+export const updateGlobalScore = (userId: number, learning_type: string) => {
+    const query = `UPDATE users SET ${learning_type}_score = ? WHERE id = ?`;
+    findAllScores(
         userId,
         'ASC',
         learning_type,
@@ -345,8 +342,8 @@ export const updateGlobalLevel = (userId: number, learning_type: string) => {
                 let sum = 0;
                 let counter = 0;
                 for (let user_score of result) {
-                    if (user_score.level != -1) {
-                        sum += user_score.level;
+                    if (user_score.score != -1) {
+                        sum += user_score.score;
                         counter++;
                     }
                 }
@@ -395,8 +392,8 @@ export const updateSucceededScore = (
         if (err) {
             callback(err);
         } else {
-            updateLevel(userId, countryCode, learning_type);
-            updateGlobalLevel(userId, learning_type);
+            updateScore(userId, countryCode, learning_type);
+            updateGlobalScore(userId, learning_type);
             callback(null, result);
         }
     });
