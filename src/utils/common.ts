@@ -131,8 +131,7 @@ export const getNewCountryToPlay = (userScores: UserScore[]): string => {
         .country_code;
 };
 
-export function t(translations: Prisma.JsonValue, lang: Lang): string|null
-{
+export function t(translations: Prisma.JsonValue, lang: Lang): string | null {
     if (
         translations === null ||
         typeof translations !== 'object' ||
@@ -141,7 +140,9 @@ export function t(translations: Prisma.JsonValue, lang: Lang): string|null
         return null;
     }
 
-    return (translations[lang] as string|null)
-        ?? (translations[DefaultLang] as string|null)
-        ?? null;
+    return (
+        (translations[lang] as string | null) ??
+        (translations[DefaultLang] as string | null) ??
+        null
+    );
 }
