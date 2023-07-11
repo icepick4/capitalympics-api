@@ -34,33 +34,35 @@ model Country {
   google_maps_link  String            @db.VarChar(255)
   flag              String            @db.VarChar(255)
   countryCurrencies CountryCurrency[]
+  region            Region            @relation(fields: [region_id], references: [id])
 
   @@index([region_id], map: "idx_country_region_id")
 }
 
 model CountryCurrency {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
   country_id  Int      @db.UnsignedInt
   currency_id Int      @db.UnsignedInt
   country     Country  @relation(fields: [country_id], references: [id])
   currency    Currency @relation(fields: [currency_id], references: [id])
 
-  @@id([country_id, currency_id])
   @@index([country_id], map: "idx_countrycurrency_country_id")
   @@index([currency_id], map: "idx_countrycurrency_currency_id")
 }
 
 model Currency {
-  id                Int               @id @default(autoincrement()) @db.UnsignedInt
-  name              String            @db.VarChar(100)
-  symbol            String            @unique(map: "symbol") @db.VarChar(100)
-  countryCurrencies CountryCurrency[]
+  id        Int               @id @default(autoincrement()) @db.UnsignedInt
+  name      String            @db.VarChar(100)
+  symbol    String            @unique(map: "symbol") @db.VarChar(100)
+  countries CountryCurrency[]
 }
 
 model Region {
   id           Int       @id @default(autoincrement()) @db.UnsignedInt
   name         Json
-  continent_id Int       @db.UnsignedInt
   continent    Continent @relation(fields: [continent_id], references: [id])
+  continent_id Int       @db.UnsignedInt
+  Country      Country[]
 
   @@index([continent_id], map: "idx_region_continent_id")
 }

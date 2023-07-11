@@ -1,17 +1,21 @@
+import { PrismaClient } from '@prisma/client';
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
-import * as countryModel from '../models/country.model';
-import { Country } from '../types/country';
-import { Lang, Languages } from '../utils/common';
+import { Languages, t } from '../utils/common';
 
 const countryRouter = express.Router();
+const prisma = new PrismaClient();
 
 countryRouter.get('/', async (req: Request, res: Response) => {
     const QuerySchema = z.object({
-        max: z.string().transform(value => Number(value))
-            .refine(value => !isNaN(value) && value > 0, { message: 'The max parameter must be a positive number' })
+        max: z
+            .string()
+            .transform((value) => Number(value))
+            .refine((value) => !isNaN(value) && value > 0, {
+                message: 'The max parameter must be a positive number'
+            })
             .optional(),
-        lang: z.enum(Languages).default('en'),
+        lang: z.enum(Languages).default('en')
     });
 
     const result = QuerySchema.safeParse(req.query);
@@ -19,50 +23,130 @@ countryRouter.get('/', async (req: Request, res: Response) => {
         return res.status(406).send(result.error);
     }
 
-    let { lang, max } = result.data;
+    const { lang, max } = result.data;
 
-    countryModel.findAll(lang, (err: Error, countries: Country[]) => {
-        max ??= countries.length;
-        const randomStart = Math.floor(Math.random() * (countries.length - max));
+    try {
+        const countries = await prisma.country.findMany({
+            take: max ?? undefined,
+            include: {
+                region: {
+                    include: {
+                        continent: true
+                    }
+                },
+                countryCurrencies: {
+                    include: {
+                        currency: true
+                    }
+                }
+            }
+        });
 
-        if (max != countries.length) {
-            countries = countries.slice(randomStart, randomStart + max);
-        }
+        const mappedCountries = countries.map((country) => ({
+            id: country.id,
+            code: country.code,
+            name: t(country.name, lang),
+            capital: t(country.capital, lang),
+            official_name: t(country.official_name, lang),
+            population: country.population,
+            google_maps_link: country.google_maps_link,
+            flag: country.flag,
+            region: {
+                id: country.region.id,
+                name: t(country.region.name, lang),
+                continent: {
+                    id: country.region.continent.id,
+                    name: t(country.region.continent.name, lang)
+                }
+            },
+            currencies: country.countryCurrencies.map((countryCurrency) => ({
+                id: countryCurrency.currency.id,
+                name: countryCurrency.currency.name,
+                symbol: countryCurrency.currency.symbol
+            }))
+        }));
 
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-
-        res.status(200).json({ countries: countries });
-    });
+        res.status(200).json({ countries: mappedCountries });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Only when need to initialize the database
-// countryRouter.post('/', async (req: Request, res: Response) => {
-//     const country: Country = req.body;
-//     countryModel.create(country, (err: Error, countryId: number) => {
-//         if (err) {
-//             return res.status(500).json({ error: err.message });
-//         }
-//         res.status(200).json({ countryId: countryId });
-//     });
-// });
-
 countryRouter.get('/:code', async (req: Request, res: Response) => {
-    let lang: Lang = 'en';
-    if (req.query.lang) {
-        lang = req.query.lang as Lang;
+    //get code in params and lang in query with zod
+    const ParamsSchema = z.object({
+        code: z.string().length(3)
+    });
+
+    const QuerySchema = z.object({
+        lang: z.enum(Languages).default('en')
+    });
+
+    const paramsResult = ParamsSchema.safeParse(req.params);
+    const queryResult = QuerySchema.safeParse(req.query);
+
+    if (!paramsResult.success) {
+        return res.status(406).send(paramsResult.error);
     }
-    countryModel.findByCode(
-        req.params.code,
-        lang,
-        (err: Error, country: Country) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
+
+    if (!queryResult.success) {
+        return res.status(406).send(queryResult.error);
+    }
+
+    const { code } = paramsResult.data;
+    const { lang } = queryResult.data;
+
+    try {
+        const country = await prisma.country.findUnique({
+            where: {
+                code
+            },
+            include: {
+                region: {
+                    include: {
+                        continent: true
+                    }
+                },
+                countryCurrencies: {
+                    include: {
+                        currency: true
+                    }
+                }
             }
-            res.status(200).json({ country: country });
+        });
+
+        if (!country) {
+            return res.status(404).json({ error: 'Country not found' });
         }
-    );
+
+        const finalCountry = {
+            id: country.id,
+            code: country.code,
+            name: t(country.name, lang),
+            capital: t(country.capital, lang),
+            official_name: t(country.official_name, lang),
+            population: country.population,
+            google_maps_link: country.google_maps_link,
+            flag: country.flag,
+            region: {
+                id: country.region.id,
+                name: t(country.region.name, lang),
+                continent: {
+                    id: country.region.continent.id,
+                    name: t(country.region.continent.name, lang)
+                }
+            },
+            currencies: country.countryCurrencies.map((countryCurrency) => ({
+                id: countryCurrency.currency.id,
+                name: countryCurrency.currency.name,
+                symbol: countryCurrency.currency.symbol
+            }))
+        };
+
+        res.status(200).json(finalCountry);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 export default countryRouter;

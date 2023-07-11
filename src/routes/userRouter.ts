@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { DateTime } from 'luxon';
 import { OkPacket } from 'mysql2';
 import { ENV } from '../env';
-import * as countryModel from '../models/country.model';
+// import * as countryModel from '../models/country.model';
 import * as userModel from '../models/user.model';
 import { Country } from '../types/country';
 import { User, UserScore } from '../types/user';
@@ -179,56 +179,56 @@ userRouter.post(
                 return res.status(500).json({ error: err.message });
             }
             //init every user_scores for every country to -1
-            countryModel.findAll('en', (err: any, countries: Country[]) => {
-                if (err) {
-                    return res.status(500).json({ error: err.message });
-                } else {
-                    let completed = 0;
-                    let hasSentResponse = false;
-                    countries.forEach((country) => {
-                        userModel.createScore(
-                            id,
-                            user.name,
-                            country.alpha3Code,
-                            (err: any) => {
-                                if (err && !hasSentResponse) {
-                                    hasSentResponse = true;
-                                    return res.status(500).json({
-                                        error: err.message
-                                    });
-                                } else {
-                                    completed++;
-                                    if (
-                                        completed === countries.length &&
-                                        !hasSentResponse
-                                    ) {
-                                        user.flag_level = 0;
-                                        user.capital_level = 0;
-                                        userModel.update(
-                                            user,
-                                            id,
-                                            (err: any) => {
-                                                if (err) {
-                                                    return res
-                                                        .status(500)
-                                                        .json({
-                                                            error: err.message
-                                                        });
-                                                } else {
-                                                    hasSentResponse = true;
-                                                    return res
-                                                        .status(200)
-                                                        .send();
-                                                }
-                                            }
-                                        );
-                                    }
-                                }
-                            }
-                        );
-                    });
-                }
-            });
+            // countryModel.findAll('en', (err: any, countries: Country[]) => {
+            //     if (err) {
+            //         return res.status(500).json({ error: err.message });
+            //     } else {
+            //         let completed = 0;
+            //         let hasSentResponse = false;
+            //         countries.forEach((country) => {
+            //             userModel.createScore(
+            //                 id,
+            //                 user.name,
+            //                 country.alpha3Code,
+            //                 (err: any) => {
+            //                     if (err && !hasSentResponse) {
+            //                         hasSentResponse = true;
+            //                         return res.status(500).json({
+            //                             error: err.message
+            //                         });
+            //                     } else {
+            //                         completed++;
+            //                         if (
+            //                             completed === countries.length &&
+            //                             !hasSentResponse
+            //                         ) {
+            //                             user.flag_level = 0;
+            //                             user.capital_level = 0;
+            //                             userModel.update(
+            //                                 user,
+            //                                 id,
+            //                                 (err: any) => {
+            //                                     if (err) {
+            //                                         return res
+            //                                             .status(500)
+            //                                             .json({
+            //                                                 error: err.message
+            //                                             });
+            //                                     } else {
+            //                                         hasSentResponse = true;
+            //                                         return res
+            //                                             .status(200)
+            //                                             .send();
+            //                                     }
+            //                                 }
+            //                             );
+            //                         }
+            //                     }
+            //                 }
+            //             );
+            //         });
+            //     }
+            // });
         });
     }
 );

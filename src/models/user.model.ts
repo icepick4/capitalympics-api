@@ -1,6 +1,5 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { database } from '../database';
-import { Country } from '../types/country';
 import { User, UserScore } from '../types/user';
 import {
     Lang,
@@ -10,7 +9,7 @@ import {
     getNewCountryToPlay,
     hashPassword
 } from '../utils/common';
-import * as countryModel from './country.model';
+// import * as countryModel from './country.model';
 export const create = async (user: User, callback: Function) => {
     const query =
         'INSERT INTO users (name, password, language, last_activity) VALUES (?, ?, ?, ?)';
@@ -152,17 +151,17 @@ export const findNewCountry = (
                 user_scores.push(userScore);
             }
             const newCountryCode = getNewCountryToPlay(user_scores);
-            countryModel.findByCode(
-                newCountryCode,
-                lang,
-                (err: any, result: Country) => {
-                    if (err) {
-                        callback(err);
-                    } else {
-                        callback(null, result);
-                    }
-                }
-            );
+            // countryModel.findByCode(
+            //     newCountryCode,
+            //     lang,
+            //     (err: any, result: Country) => {
+            //         if (err) {
+            //             callback(err);
+            //         } else {
+            //             callback(null, result);
+            //         }
+            //     }
+            // );
         }
     });
 };
