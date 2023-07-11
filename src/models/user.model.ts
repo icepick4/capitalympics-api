@@ -269,6 +269,31 @@ export const findAllScores = (
     });
 };
 
+export const findSingleScore = (
+    id: number,
+    learning_type: string,
+    country_code: string,
+    callback: Function
+) => {
+    const query = `SELECT * FROM ${learning_type}_scores WHERE user_id = ? AND score > -1 AND country_code = ?`;
+    database.query(
+        query,
+        [id, country_code],
+        (err, result: RowDataPacket[]) => {
+            if (err) {
+                callback(err);
+            } else {
+                const rows = <RowDataPacket[]>result;
+                if (rows.length === 0) {
+                    callback(null, []);
+                    return;
+                }
+                callback(null, rows[0].score);
+            }
+        }
+    );
+};
+
 export const update = (user: User, userId: number, callback: Function) => {
     const query =
         'UPDATE users SET name = ?, last_activity = ?, language = ?, flag_score = ?, capital_score = ? WHERE id = ?';

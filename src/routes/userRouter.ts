@@ -53,6 +53,27 @@ userRouter.get(
 );
 
 userRouter.get(
+    '/:id/:country_code/:learning_type/score',
+    tokenMiddleware,
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        const country_code = req.params.country_code;
+        const learning_type: string = req.params.learning_type;
+        userModel.findSingleScore(
+            id,
+            learning_type,
+            country_code,
+            (err: Error, score: UserScore) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                res.status(200).json({ score: score });
+            }
+        );
+    }
+);
+
+userRouter.get(
     '/:id/score',
     tokenMiddleware,
     async (req: Request, res: Response) => {
