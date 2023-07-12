@@ -123,7 +123,7 @@ export const findByCode = (code: string, lang: Lang, callback: Function) => {
             rows.forEach((row) => {
                 const currency: Currency = {
                     country_code: row.country_code,
-                    name: row.name,
+                    name: row.currency_name,
                     symbol: row.symbol,
                     id: row.id
                 };
