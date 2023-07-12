@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { ENV } from './env';
 
 import countryRouter from './routes/countryRouter';
+import securityRouter from './routes/securityRouter';
 import userRouter from './routes/userRouter';
 import { corsMiddleware } from './utils/authMiddlewares';
 
@@ -15,6 +16,7 @@ app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use('/api', corsMiddleware, securityRouter);
 app.use('/api/users', corsMiddleware, userRouter);
 app.use('/api/countries', corsMiddleware, countryRouter);
 

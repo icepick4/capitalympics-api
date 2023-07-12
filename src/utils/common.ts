@@ -1,11 +1,10 @@
+import bcrypt from 'bcrypt';
 import { UserScore } from '../types/user';
 
-const bcrypt = require('bcrypt');
-
-export const hashPassword = async (password: string): Promise<string> => {
-    const saltRounds = 10;
-    return await bcrypt.hash(password, saltRounds);
-};
+export function hashPassword(password: string, saltRounds: number = 10): Promise<string>
+{
+    return bcrypt.hash(password, saltRounds);
+}
 
 export const comparePasswords = async (
     password: string,
@@ -69,3 +68,9 @@ export const getNewCountryToPlay = (userScores: UserScore[]): string => {
     return secondHalf[Math.floor(Math.random() * secondHalf.length)]
         .country_code;
 };
+
+export const LearningTypes = ['capital', 'flag'] as const;
+export type LearningType = (typeof LearningTypes)[number];
+
+export type Nullish = null | undefined;
+export type Maybe<T> = T | Nullish;

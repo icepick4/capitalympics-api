@@ -5,5 +5,8 @@ export const database = mysql.createConnection({
     host: ENV.DB_HOST,
     user: ENV.DB_USER,
     password: ENV.DB_PWD,
-    database: ENV.DB_NAME
+    database: ENV.DB_NAME,
+    ...(!!parseInt(ENV.SSL_REJECT_UNAUTHORIZED) === false ? {
+        ssl: { rejectUnauthorized: false },
+    }: {}),
 });

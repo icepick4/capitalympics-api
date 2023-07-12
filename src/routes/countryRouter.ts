@@ -33,34 +33,22 @@ countryRouter.get('/', async (req: Request, res: Response) => {
             return res.status(500).json({ error: err.message });
         }
 
-        res.status(200).json({ countries: countries });
+        res.status(200).json({ countries });
     });
 });
 
-// Only when need to initialize the database
-// countryRouter.post('/', async (req: Request, res: Response) => {
-//     const country: Country = req.body;
-//     countryModel.create(country, (err: Error, countryId: number) => {
-//         if (err) {
-//             return res.status(500).json({ error: err.message });
-//         }
-//         res.status(200).json({ countryId: countryId });
-//     });
-// });
-
 countryRouter.get('/:code', async (req: Request, res: Response) => {
-    let lang: Lang = 'en';
-    if (req.query.lang) {
-        lang = req.query.lang as Lang;
-    }
+    const lang: Lang = (req.query.lang as Lang|undefined) ?? 'en';
+
     countryModel.findByCode(
         req.params.code,
         lang,
-        (err: Error, country: Country) => {
+        (err: Error|null, country: Country) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(200).json({ country: country });
+
+            res.status(200).json({ country });
         }
     );
 });
