@@ -236,10 +236,14 @@ export const findAllScores = (
     id: number,
     sort: string,
     learning_type: string,
+    region: string,
     callback: Function
 ) => {
-    const query = `SELECT * FROM ${learning_type}_scores WHERE user_id = ? AND score > -1 ORDER BY score ${sort}`;
-    database.query(query, [id, sort], (err, result: RowDataPacket[]) => {
+    const query =
+        region == 'World'
+            ? `SELECT * FROM ${learning_type}_scores WHERE user_id = ? AND score > -1 ORDER BY score ${sort}`
+            : `SELECT * FROM ${learning_type}_scores JOIN countries ON countries.alpha3Code COLLATE utf8mb4_unicode_ci = ${learning_type}_scores.country_code COLLATE utf8mb4_unicode_ci WHERE user_id = ? AND score > -1 AND region = ? ORDER BY score ${sort}`;
+    database.query(query, [id, region], (err, result: RowDataPacket[]) => {
         if (err) {
             callback(err);
         } else {
@@ -362,6 +366,7 @@ export const updateGlobalScore = (userId: number, learning_type: string) => {
         userId,
         'ASC',
         learning_type,
+        'World',
         (err: any, result: UserScore[]) => {
             if (result) {
                 let sum = 0;

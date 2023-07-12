@@ -37,10 +37,17 @@ userRouter.get(
         } else {
             sort = 'DESC';
         }
+        let region: string;
+        if (req.query.region) {
+            region = req.query.region as string;
+        } else {
+            region = 'World';
+        }
         userModel.findAllScores(
             id,
             sort,
             learning_type,
+            region,
             (err: Error, scores: Array<UserScore>) => {
                 max = max ? max : scores.length;
                 if (err) {
