@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { database } from '../database';
 import { Country } from '../types/country';
@@ -11,13 +12,12 @@ import {
 } from '../utils/common';
 import * as countryModel from './country.model';
 export const create = async (user: User, callback: Function) => {
-    const query =
-        'INSERT INTO users (name, password, language, last_activity) VALUES (?, ?, ?, ?)';
-    const hashedPassword = await hashPassword(user.password);
-    user.password = hashedPassword;
+    const query = 'INSERT INTO users (name, password, language, last_activity) VALUES (?, ?, ?, ?)';
+    user.password = await hashPassword(user.password);
+
     database.query(
         query,
-        [user.name, user.password, user.language, user.last_activity],
+        [user.name, user.password, user.language, DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss')],
         (err, result: OkPacket) => {
             if (err) {
                 callback(err);
@@ -122,13 +122,17 @@ export const findNewCountry = (
     region: string,
     callback: Function
 ) => {
-    let query =
-        region === 'World'
-            ? `SELECT * FROM ${learning_type}_scores WHERE user_id = ?`
-            : `SELECT * FROM ${learning_type}_scores
-            JOIN countries ON ${learning_type}_scores.country_code COLLATE utf8mb4_unicode_ci = countries.alpha3Code COLLATE utf8mb4_unicode_ci
-            WHERE ${learning_type}_scores.user_id = ? AND countries.region = ?`;
+    const defaultQuery = `SELECT * FROM ${learning_type}_scores WHERE user_id = ?`;
+
+    let query = region === 'World' ? defaultQuery : `
+        SELECT *
+        FROM ${learning_type}_scores AS s
+        JOIN countries AS c ON s.country_code = c.alpha3Code
+        WHERE scores.user_id = ? AND countries.region = ?
+    `;
+
     query += ' ORDER BY score ASC';
+
     database.query(query, [id, region], (err, result: RowDataPacket[]) => {
         if (err) {
             callback(err);
@@ -183,12 +187,13 @@ export const findOne = (id: number, callback: Function) => {
                 name: rows[0].name,
                 image: rows[0].image,
                 password: rows[0].password,
-                flag_score: rows[0].flag_score,
-                capital_score: rows[0].capital_score,
+                flag_score: rows[0].flag_score ?? 0,
+                capital_score: rows[0].capital_score ?? 0,
                 last_activity: rows[0].last_activity,
                 created_at: rows[0].created_at,
                 language: rows[0].language
             };
+
             callback(null, user);
         }
     });
@@ -411,11 +416,11 @@ export const updateSucceededScore = (
             reset_score2 = 'medium';
     }
 
-    const query = `UPDATE ${learning_type}_scores 
-                   SET ${score} = ${score} + 1, 
-                       ${score}_streak = ${score}_streak + 1, 
-                       ${reset_score1}_streak = 0, 
-                       ${reset_score2}_streak = 0 
+    const query = `UPDATE ${learning_type}_scores
+                   SET ${score} = ${score} + 1,
+                       ${score}_streak = ${score}_streak + 1,
+                       ${reset_score1}_streak = 0,
+                       ${reset_score2}_streak = 0
                    WHERE user_id = ? AND country_code = ?`;
 
     database.query(query, [userId, countryCode], (err, result: OkPacket) => {
