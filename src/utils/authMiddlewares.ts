@@ -37,16 +37,17 @@ export function AuthMiddleware(
     next: NextFunction
 ) {
     const HEADER_NAME = 'authorization';
-    const headersSchema = z.object({ [HEADER_NAME]: z.string().startsWith('Bearer ').nonempty() });
-
+    const headersSchema = z.object({
+        [HEADER_NAME]: z.string().startsWith('Bearer ').nonempty()
+    });
     const result = headersSchema.safeParse(request.headers);
     if (!result.success) {
         return response.status(401).json({
             success: false,
             error: {
                 code: 'access_token_missing',
-                message: `This route requires a non-empty '${HEADER_NAME}' header`,
-            },
+                message: `This route requires a non-empty '${HEADER_NAME}' header`
+            }
         });
     }
 
@@ -58,11 +59,16 @@ export function AuthMiddleware(
 
         return next();
     } catch (err) {
-        const error = err as JsonWebTokenError|TokenExpiredError;
-        const code = error.name === 'TokenExpiredError' ? 'access_token_expired' : 'invalid_token';
+        const error = err as JsonWebTokenError | TokenExpiredError;
+        const code =
+            error.name === 'TokenExpiredError'
+                ? 'access_token_expired'
+                : 'invalid_token';
         const message = 'This route requires a valid access token';
 
-        return response.status(401).json({ success: false, error: { code, message } });
+        return response
+            .status(401)
+            .json({ success: false, error: { code, message } });
     }
 }
 

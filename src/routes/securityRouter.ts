@@ -13,7 +13,7 @@ const securityRouter = express.Router();
 securityRouter.post('/login', async (req: Request, res: Response) => {
     const requestSchema = z.object({
         username: z.string(),
-        password: z.string(),
+        password: z.string()
     });
 
     const result = requestSchema.safeParse(req.body);
@@ -23,35 +23,55 @@ securityRouter.post('/login', async (req: Request, res: Response) => {
 
     const { username, password } = result.data;
 
-    userModel.connect(username, password, DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss'), (err: Error|null, user: User|null) => {
-        if (!user) {
-            return res.status(404).json({ message: 'User not found', error: err });
-        }
+    userModel.connect(
+        username,
+        password,
+        DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss'),
+        (err: Error | null, user: User | null) => {
+            if (!user) {
+                return res
+                    .status(404)
+                    .json({ message: 'User not found', error: err });
+            }
 
-        if (err) {
-            return res.status(500).json({ message: 'An error occured', error: err });
-        }
+            if (err) {
+                return res
+                    .status(500)
+                    .json({ message: 'An error occured', error: err });
+            }
 
-        const payload = pick(user, ['id', 'created_at']);
+            const payload = pick(user, ['id', 'created_at']);
+            const token = sign(payload, ENV.JWT_TOKEN, { expiresIn: '2h' });
+
+            res.status(200).json({ success: true, data: { token } });
+        }
+    );
+});
+
+securityRouter.post(
+    '/refresh-token',
+    AuthMiddleware,
+    async (req: Request, res: Response) => {
+        const payload: { id: number; createdAt: string } = req.app.get('auth');
         const token = sign(payload, ENV.JWT_TOKEN, { expiresIn: '2h' });
 
-        res.status(200).json({ success: true, data: { token }});
-    });
-});
+        res.status(200).json({ success: true, data: { token } });
+    }
+);
 
-securityRouter.post('/refresh-token', AuthMiddleware, async (req: Request, res: Response) => {
-    const payload: { id: number, createdAt: string } = req.app.get('auth');
-    const token = sign(payload, ENV.JWT_TOKEN, { expiresIn: '2h' });
+securityRouter.get(
+    '/me',
+    AuthMiddleware,
+    async (request: Request, response: Response) => {
+        const authData: { id: number; createdAt: string } =
+            request.app.get('auth');
 
-    res.status(200).json({ success: true, data: { token }});
-});
-
-securityRouter.get('/me', AuthMiddleware, async (request: Request, response: Response) => {
-    const authData: { id: number, createdAt: string } = request.app.get('auth');
-
-    userModel.findOne(authData.id, (error: null, user: User) => {
-        response.status(200).json({ success: true, data: omit(user, ['password']) });
-    });
-});
+        userModel.findOne(authData.id, (error: null, user: User) => {
+            response
+                .status(200)
+                .json({ success: true, data: omit(user, ['password']) });
+        });
+    }
+);
 
 export default securityRouter;
