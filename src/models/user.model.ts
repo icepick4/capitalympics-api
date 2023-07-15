@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { database } from '../database';
-import { Country } from '../types/country';
+import { Country, CountryDetails, Region } from '../types/country';
 import { User, UserScore } from '../types/user';
 import {
     Lang,
@@ -12,12 +12,18 @@ import {
 } from '../utils/common';
 import * as countryModel from './country.model';
 export const create = async (user: User, callback: Function) => {
-    const query = 'INSERT INTO users (name, password, language, last_activity) VALUES (?, ?, ?, ?)';
+    const query =
+        'INSERT INTO users (name, password, language, last_activity) VALUES (?, ?, ?, ?)';
     user.password = await hashPassword(user.password);
 
     database.query(
         query,
-        [user.name, user.password, user.language, DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss')],
+        [
+            user.name,
+            user.password,
+            user.language,
+            DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss')
+        ],
         (err, result: OkPacket) => {
             if (err) {
                 callback(err);
@@ -124,7 +130,10 @@ export const findNewCountry = (
 ) => {
     const defaultQuery = `SELECT * FROM ${learning_type}_scores WHERE user_id = ?`;
 
-    let query = region === 'World' ? defaultQuery : `
+    let query =
+        region === 'World'
+            ? defaultQuery
+            : `
         SELECT *
         FROM ${learning_type}_scores AS s
         JOIN countries AS c ON s.country_code = c.alpha3Code
@@ -241,14 +250,19 @@ export const findAllScores = (
     id: number,
     sort: string,
     learning_type: string,
-    region: string,
+    region: Region,
+    lang: Lang,
     callback: Function
 ) => {
-    const query =
-        region == 'World'
-            ? `SELECT * FROM ${learning_type}_scores WHERE user_id = ? AND score > -1 ORDER BY score ${sort}`
-            : `SELECT * FROM ${learning_type}_scores JOIN countries ON countries.alpha3Code COLLATE utf8mb4_unicode_ci = ${learning_type}_scores.country_code COLLATE utf8mb4_unicode_ci WHERE user_id = ? AND score > -1 AND region = ? ORDER BY score ${sort}`;
-    database.query(query, [id, region], (err, result: RowDataPacket[]) => {
+    const query = `SELECT translations.name, countries.alpha3Code, countries.flag, countries.region, ${learning_type}_scores.score FROM ${learning_type}_scores, countries LEFT JOIN translations ON countries.alpha3Code = translations.country_code AND translations.language = ? WHERE user_id = ? AND score > -1 AND countries.alpha3Code COLLATE utf8mb4_unicode_ci = ${learning_type}_scores.country_code COLLATE utf8mb4_unicode_ci${
+        region === 'World' ? '' : ' AND region = ?'
+    } ORDER BY score ${sort}`;
+    const params: (string | number)[] = [lang, id];
+    if (region !== 'World') {
+        params.push(region);
+    }
+
+    database.query(query, params, (err, result: RowDataPacket[]) => {
         if (err) {
             callback(err);
         } else {
@@ -257,22 +271,13 @@ export const findAllScores = (
                 callback(null, []);
                 return;
             }
-            let scores: UserScore[] = [];
-            for (let row of rows) {
-                let userScore: UserScore = {
-                    user_id: row.user_id,
-                    user_name: row.user_name,
-                    country_code: row.country_code,
-                    succeeded: row.succeeded,
-                    succeeded_streak: row.succeeded_streak,
-                    medium: row.medium,
-                    medium_streak: row.medium_streak,
-                    failed: row.failed,
-                    failed_streak: row.failed_streak,
-                    score: row.score
-                };
-                scores.push(userScore);
-            }
+            const scores: CountryDetails[] = rows.map((row) => ({
+                name: row.name,
+                alpha3Code: row.alpha3Code,
+                flag: row.flag,
+                score: row.score,
+                region: row.region
+            }));
             callback(null, scores);
         }
     });
@@ -372,6 +377,7 @@ export const updateGlobalScore = (userId: number, learning_type: string) => {
         'ASC',
         learning_type,
         'World',
+        'en',
         (err: any, result: UserScore[]) => {
             if (result) {
                 let sum = 0;

@@ -4,9 +4,13 @@ import { OkPacket } from 'mysql2';
 import { pick } from 'radash';
 import * as countryModel from '../models/country.model';
 import * as userModel from '../models/user.model';
-import { Country } from '../types/country';
+import { Country, Region } from '../types/country';
 import { User, UserScore } from '../types/user';
-import { AuthMiddleware, tokenMiddleware, userTypeMiddleware } from '../utils/authMiddlewares';
+import {
+    AuthMiddleware,
+    tokenMiddleware,
+    userTypeMiddleware
+} from '../utils/authMiddlewares';
 import { Lang, LearningType, Maybe } from '../utils/common';
 
 const jwt = require('jsonwebtoken');
@@ -26,7 +30,8 @@ userRouter.get(
     tokenMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
-        const learning_type: LearningType = req.params.learning_type === 'flag' ? 'flag' : 'capital';
+        const learning_type: LearningType =
+            req.params.learning_type === 'flag' ? 'flag' : 'capital';
         let max: number;
         if (req.query.max) {
             max = parseInt(req.query.max as string);
@@ -37,23 +42,29 @@ userRouter.get(
         } else {
             sort = 'DESC';
         }
-        let region: string;
+        let region: Region;
         if (req.query.region) {
-            region = req.query.region as string;
+            region = req.query.region as Region;
         } else {
             region = 'World';
+        }
+        let lang: Lang;
+        if (req.query.lang) {
+            lang = req.query.lang as Lang;
+        } else {
+            lang = 'en';
         }
         userModel.findAllScores(
             id,
             sort,
             learning_type,
             region,
+            lang,
             (err: Error, scores: Array<UserScore>) => {
-                max = max ? max : scores.length;
                 if (err) {
                     return res.status(500).json({ error: err.message });
                 }
-                res.status(200).json({ scores: scores.slice(0, max) });
+                res.status(200).json({ scores: scores });
             }
         );
     }
@@ -65,13 +76,14 @@ userRouter.get(
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
         const country_code = req.params.country_code;
-        const learning_type: LearningType = req.params.learning_type === 'flag' ? 'flag' : 'capital';
+        const learning_type: LearningType =
+            req.params.learning_type === 'flag' ? 'flag' : 'capital';
 
         userModel.findSingleScore(
             id,
             learning_type,
             country_code,
-            (err: Error|null, score: UserScore) => {
+            (err: Error | null, score: UserScore) => {
                 if (err) {
                     return res.status(500).json({ error: err.message });
                 }
@@ -82,26 +94,31 @@ userRouter.get(
     }
 );
 
-userRouter.get('/:id/score', AuthMiddleware, async (req: Request, res: Response) => {
-    const id: number = parseInt(req.params.id);
-    userModel.findOne(id, (err: Error, user: User) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
+userRouter.get(
+    '/:id/score',
+    AuthMiddleware,
+    async (req: Request, res: Response) => {
+        const id: number = parseInt(req.params.id);
+        userModel.findOne(id, (err: Error, user: User) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
 
-        res.status(200).json(pick(user, ['flag_score', 'capital_score']));
-    });
-});
+            res.status(200).json(pick(user, ['flag_score', 'capital_score']));
+        });
+    }
+);
 
 userRouter.get(
     '/:id/country/play/:learning_type',
     AuthMiddleware,
     async (req: Request, res: Response) => {
         const id: number = parseInt(req.params.id);
-        const learning_type: LearningType = req.params.learning_type === 'flag' ? 'flag' : 'capital';
+        const learning_type: LearningType =
+            req.params.learning_type === 'flag' ? 'flag' : 'capital';
 
-        const lang: Lang = req.query.lang as Maybe<Lang> || 'en';
-        const region: string = req.query.region as Maybe<string> || 'World';
+        const lang: Lang = (req.query.lang as Maybe<Lang>) || 'en';
+        const region: string = (req.query.region as Maybe<string>) || 'World';
 
         userModel.findNewCountry(
             id,
@@ -125,23 +142,29 @@ userRouter.post(
     async (req: Request, res: Response) => {
         const user: User = req.body.user;
 
-        userModel.exists(user.name, null, (err: Error|null, exists: boolean) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
+        userModel.exists(
+            user.name,
+            null,
+            (err: Error | null, exists: boolean) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
 
-            if (exists) {
-                return res.status(409).json({ error: 'User already exists' });
-            } else {
-                userModel.create(user, (err: Error, user: User) => {
-                    if (err) {
-                        return res.status(500).json({ error: err.message });
-                    }
+                if (exists) {
+                    return res
+                        .status(409)
+                        .json({ error: 'User already exists' });
+                } else {
+                    userModel.create(user, (err: Error, user: User) => {
+                        if (err) {
+                            return res.status(500).json({ error: err.message });
+                        }
 
-                    res.status(200).json({ user });
-                });
+                        res.status(200).json({ user });
+                    });
+                }
             }
-        });
+        );
     }
 );
 
@@ -239,10 +262,11 @@ userRouter.put(
     '/:id/:country_code/:learning_type/score/:score',
     AuthMiddleware,
     async (req: Request, res: Response) => {
-        const authData: { id: number, createdAt: string } = req.app.get('auth');
+        const authData: { id: number; createdAt: string } = req.app.get('auth');
 
         const country_code: string = req.params.country_code;
-        const learning_type: LearningType = req.params.learning_type === 'flag' ? 'flag' : 'capital';
+        const learning_type: LearningType =
+            req.params.learning_type === 'flag' ? 'flag' : 'capital';
         const score: string = req.params.score;
 
         userModel.updateSucceededScore(
