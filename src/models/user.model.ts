@@ -136,8 +136,8 @@ export const findNewCountry = (
             : `
         SELECT *
         FROM ${learning_type}_scores AS s
-        JOIN countries AS c ON s.country_code = c.alpha3Code
-        WHERE scores.user_id = ? AND countries.region = ?
+        JOIN countries AS c ON s.country_code COLLATE utf8mb4_unicode_ci = c.alpha3Code COLLATE utf8mb4_unicode_ci
+        WHERE s.user_id = ? AND c.region = ?
     `;
 
     query += ' ORDER BY score ASC';
