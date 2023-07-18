@@ -32,4 +32,4 @@ RUN npm install pm2 -g
 
 EXPOSE 3001
 
-CMD ["pm2-runtime", "dist/main.js"]
+CMD ["pm2-runtime", "dist/index.js"]
