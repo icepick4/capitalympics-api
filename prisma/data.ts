@@ -235,10 +235,10 @@ export const COUNTRIES: Country[] = [
     {
         code: 'ZAF',
         name: {
-            en: 'Albania',
-            es: 'Albania',
+            en: 'South Africa',
+            es: 'Sudáfrica',
             fr: 'Afrique du Sud',
-            it: 'Albania'
+            it: 'Sud Africa'
         },
         capital: {
             fr: 'Pretoria',

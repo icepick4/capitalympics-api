@@ -2,11 +2,11 @@ import { PrismaClient } from '@prisma/client';
 import express, { Request, Response } from 'express';
 import { DateTime } from 'luxon';
 import { z } from 'zod';
-import * as userModel from '../models/user.model';
 import { AuthMiddleware } from '../utils/authMiddlewares';
 import {
     DefaultLang,
     Languages,
+    LearningType,
     LearningTypes,
     calculateScore,
     getNewCountryToPlay,
@@ -17,6 +17,92 @@ import {
 const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 const prisma = new PrismaClient();
+
+const getScores = async (
+    id: number,
+    type: LearningType,
+    continent: number | undefined
+) => {
+    let scores = [];
+    if (continent === undefined) {
+        scores = await prisma.questionResult.groupBy({
+            by: ['country_id', 'result'],
+            where: {
+                user_id: id,
+                learning_type: type
+            },
+            _count: {
+                result: true
+            }
+        });
+    } else {
+        scores = await prisma.questionResult.groupBy({
+            by: ['country_id', 'result'],
+            where: {
+                user_id: id,
+                learning_type: type,
+                country: {
+                    region: {
+                        continent_id: continent
+                    }
+                }
+            },
+            _count: {
+                result: true
+            }
+        });
+    }
+
+    const scoreResults: { id: number; [key: string]: number }[] = [];
+
+    const countriesCount = continent
+        ? await prisma.country.count({
+              where: {
+                  region: {
+                      continent_id: continent
+                  }
+              }
+          })
+        : await prisma.country.count();
+
+    const arrayCountries = Array.from(Array(countriesCount).keys());
+
+    scores.forEach((score) => {
+        const countryId = score.country_id;
+        const result = score.result;
+
+        const existingScore = scoreResults.find(
+            (item) => item.id === countryId
+        );
+        if (existingScore) {
+            existingScore[result] = score._count.result;
+        } else {
+            const newScore = {
+                id: countryId,
+                succeeded: 0,
+                medium: 0,
+                failed: 0
+            };
+            newScore[result] = score._count.result;
+            scoreResults.push(newScore);
+        }
+    });
+    arrayCountries.forEach((countryId) => {
+        const existingScore = scoreResults.find(
+            (item) => item.id === countryId + 1
+        );
+        if (!existingScore) {
+            scoreResults.push({
+                id: countryId + 1,
+                score: 0,
+                succeeded: 0,
+                medium: 0,
+                failed: 0
+            });
+        }
+    });
+    return scoreResults;
+};
 
 userRouter.get('/', async (req: Request, res: Response) => {
     const count = await prisma.user.count();
@@ -32,7 +118,8 @@ userRouter.get(
             continent: z
                 .preprocess(Number, z.number().nonnegative())
                 .default(-1)
-                .optional()
+                .optional(),
+            lang: z.enum(Languages).default(DefaultLang)
         });
 
         const result = querySchema.safeParse(req.query);
@@ -44,29 +131,62 @@ userRouter.get(
 
         const { id } = req.app.get('auth');
 
-        const { type, continent } = result.data;
+        const { type, continent, lang } = result.data;
 
-        const scores = await userModel.getScores(id, type, continent);
+        const scoreResults = await getScores(id, type, continent);
 
-        for (const score in scores) {
-            scores[score].score = calculateScore(
-                scores[score]['succeeded'],
-                scores[score]['medium'],
-                scores[score]['failed']
-            );
-            delete scores[score]['succeeded'];
-            delete scores[score]['medium'];
-            delete scores[score]['failed'];
+        const mappedScores = scoreResults.map((score) => ({
+            id: score.id,
+            score: calculateScore(
+                score['succeeded'],
+                score['medium'],
+                score['failed']
+            ),
+            name: '',
+            flag: ''
+        }));
+
+        const countries = await prisma.country.findMany({
+            where: {
+                id: {
+                    in: mappedScores.map((score) => score.id)
+                }
+            },
+            select: {
+                id: true,
+                code: true,
+                name: true,
+                flag: true
+            }
+        });
+
+        if (!countries) {
+            return res
+                .status(404)
+                .json({ success: false, error: 'Countries not found' });
         }
 
-        res.status(200).json({ success: true, scores });
+        mappedScores.forEach((score) => {
+            const country = countries.find(
+                (country) => country.id === score.id
+            );
+            if (country) {
+                score.name = t(country.name, lang)!;
+                score.flag = country.flag;
+            }
+        });
+
+        res.status(200).json({ success: true, scores: mappedScores });
     }
 );
 
 userRouter.get('/play', AuthMiddleware, async (req: Request, res: Response) => {
     const querySchema = z.object({
         lang: z.enum(Languages).default(DefaultLang),
-        continent: z.preprocess(Number, z.number().nonnegative()).default(-1),
+        continent: z
+            .preprocess(Number, z.number().nonnegative())
+            .default(-1)
+            .optional(),
         type: z.enum(LearningTypes)
     });
 
@@ -80,7 +200,7 @@ userRouter.get('/play', AuthMiddleware, async (req: Request, res: Response) => {
     const { lang, continent, type } = resultQuery.data;
     const { id } = req.app.get('auth');
 
-    const scores = await userModel.getScores(id, type, continent);
+    const scores = await getScores(id, type, continent);
 
     for (const score in scores) {
         scores[score].score = calculateScore(
@@ -98,10 +218,6 @@ userRouter.get('/play', AuthMiddleware, async (req: Request, res: Response) => {
     const newCountry = await prisma.country.findUnique({
         where: {
             id: newCountryId
-        },
-        include: {
-            region: true,
-            countryCurrencies: true
         }
     });
 

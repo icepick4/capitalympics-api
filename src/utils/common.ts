@@ -142,7 +142,6 @@ export const getNewCountryToPlay = (
     }[]
 ): number => {
     userScores.sort((a, b) => b.score - a.score);
-    console.log(userScores);
     const lowPartWeight = 0.8;
     const half = Math.ceil(userScores.length / 2);
     const firstHalf = userScores.slice(0, half);
