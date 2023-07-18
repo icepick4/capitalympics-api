@@ -37,11 +37,13 @@
         "jsonwebtoken": "^9.0.0",
         "luxon": "^3.3.0",
         "mysql2": "^3.2.0",
+        "radash": "^11.0.0",
         "typescript": "^4.9.5",
         "yargs": "^17.7.2",
         "zod": "^3.21.4"
     },
     "devDependencies": {
+        "@types/jsonwebtoken": "^9.0.2",
         "@types/luxon": "^3.3.0",
         "concurrently": "^8.2.0",
         "nodemon": "^3.0.1",

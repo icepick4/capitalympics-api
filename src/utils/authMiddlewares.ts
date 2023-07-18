@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
+import { JsonWebTokenError, TokenExpiredError, verify } from 'jsonwebtoken';
+import { z } from 'zod';
 import { ENV } from '../env';
-import { User } from '../types/user';
 const jwt = require('jsonwebtoken');
 
 export const tokenMiddleware = (
@@ -8,9 +9,42 @@ export const tokenMiddleware = (
     res: Response,
     next: NextFunction
 ) => {
-    const auth = req.headers.authorization;
-    const token = auth && auth.split(' ')[1];
-    const id = req.params.id;
+    const HEADER_NAME = 'authorization';
+
+    const headersSchema = z.object({
+        [HEADER_NAME]: z.string().startsWith('Bearer ').nonempty()
+    });
+
+    const paramsSchema = z.object({
+        id: z.string().nonempty()
+    });
+
+    const result = headersSchema.safeParse(req.headers);
+
+    if (!result.success) {
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: 'access_token_missing',
+                message: `This route requires a non-empty '${HEADER_NAME}' header`
+            }
+        });
+    }
+
+    const resultParams = paramsSchema.safeParse(req.params);
+
+    if (!resultParams.success) {
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: 'user_id_missing',
+                message: `This route requires a non-empty 'id' parameter`
+            }
+        });
+    }
+
+    const token = result.data[HEADER_NAME].split(' ')[1];
+    const id = resultParams.data.id;
 
     if (!id) {
         return res.status(401).send({ message: 'User ID missing' });
@@ -29,75 +63,46 @@ export const tokenMiddleware = (
     }
 };
 
-export const userTypeMiddleware = (
-    req: Request,
-    res: Response,
+export function AuthMiddleware(
+    request: Request,
+    response: Response,
     next: NextFunction
-) => {
-    const user: User = req.body.user;
-    if (req.method === 'POST' && req.url === '/') {
-        if (
-            !user ||
-            typeof user !== 'object' ||
-            !('name' in user) ||
-            !('password' in user) ||
-            !('created_at' in user)
-        ) {
-            return res.status(400).send('Invalid user object for POST /users');
-        } else {
-            return next();
-        }
+) {
+    const HEADER_NAME = 'authorization';
+    const headersSchema = z.object({
+        [HEADER_NAME]: z.string().startsWith('Bearer ').nonempty()
+    });
+    const result = headersSchema.safeParse(request.headers);
+    if (!result.success) {
+        return response.status(401).json({
+            success: false,
+            error: {
+                code: 'access_token_missing',
+                message: `This route requires a non-empty '${HEADER_NAME}' header`
+            }
+        });
     }
-    if (
-        !user ||
-        typeof user !== 'object' ||
-        !('id' in user) ||
-        !('name' in user) ||
-        !('flag_level' in user) ||
-        !('capital_level' in user) ||
-        !('last_activity' in user) ||
-        !('created_at' in user)
-    ) {
-        return res.status(400).send('Invalid user object');
-    }
-    next();
-};
 
-export const userScoreTypeMiddleware = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    const userScore = req.body.userScore;
-    if (req.method === 'POST' && req.url === '/scores') {
-        if (
-            !userScore ||
-            typeof userScore !== 'object' ||
-            !('user_id' in userScore) ||
-            !('country_code' in userScore)
-        ) {
-            return res
-                .status(400)
-                .send('Invalid user object for POST /users/scores');
-        } else {
-            return next();
-        }
+    const token = result.data[HEADER_NAME].split(' ')[1];
+
+    try {
+        const authData = verify(token, ENV.JWT_TOKEN);
+        request.app.set('auth', authData);
+
+        return next();
+    } catch (err) {
+        const error = err as JsonWebTokenError | TokenExpiredError;
+        const code =
+            error.name === 'TokenExpiredError'
+                ? 'access_token_expired'
+                : 'invalid_token';
+        const message = 'This route requires a valid access token';
+
+        return response
+            .status(401)
+            .json({ success: false, error: { code, message } });
     }
-    if (
-        !userScore ||
-        typeof userScore !== 'object' ||
-        !('user_id' in userScore) ||
-        !('country_id' in userScore) ||
-        !('succeeded_streak' in userScore) ||
-        !('failed_streak' in userScore) ||
-        !('succeeded' in userScore) ||
-        !('failed' in userScore) ||
-        !('level' in userScore)
-    ) {
-        return res.status(400).send('Invalid userScore object');
-    }
-    next();
-};
+}
 
 export const corsMiddleware = (
     req: Request,

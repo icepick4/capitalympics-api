@@ -18,6 +18,23 @@ export const comparePasswords = async (
 export const Languages = ['en', 'fr', 'es', 'it'] as const;
 export const DefaultLang = 'en' as const;
 export type Lang = (typeof Languages)[number];
+export const Regions = [
+    'World',
+    'Africa',
+    'Americas',
+    'Asia',
+    'Europe',
+    'Oceania'
+] as const;
+export const DefaultRegion = 'Europe' as const;
+export type Region = (typeof Regions)[number];
+
+export const Scores = ['succeeded', 'medium', 'failed'] as const;
+export type Score = (typeof Scores)[number];
+
+export const LearningTypes = ['flag', 'capital'] as const;
+export const DefaultLearningType = 'flag' as const;
+export type LearningType = (typeof LearningTypes)[number];
 
 export const calculateScore = (
     succeeded_count: number,

@@ -3,6 +3,7 @@ import { database } from '../database';
 import { User, UserScore } from '../types/user';
 import {
     Lang,
+    Region,
     calculateScore,
     comparePasswords,
     fromScoreToLevel,
@@ -119,7 +120,7 @@ export const findNewCountry = (
     id: number,
     learning_type: string,
     lang: Lang,
-    region: string,
+    region: Region,
     callback: Function
 ) => {
     let query =

@@ -7,6 +7,7 @@ import continentRouter from './routes/continentRouter';
 import countryRouter from './routes/countryRouter';
 import userRouter from './routes/userRouter';
 
+import securityRouter from './routes/securityRouter';
 import { corsMiddleware } from './utils/authMiddlewares';
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use('/api', corsMiddleware, securityRouter);
 app.use('/api/users', corsMiddleware, userRouter);
 app.use('/api/continents', corsMiddleware, continentRouter);
 app.use('/api/countries', corsMiddleware, countryRouter);
@@ -41,28 +43,26 @@ app.use((err: Errback, _req: Request, res: Response, _next: NextFunction) => {
 
 const startServer = (): void => {
     app.listen(ENV.PORT, () => {
-        console.log(
-            `Server is running on http://localhost:${ENV.PORT}`
-        );
+        console.log(`Server is running on http://localhost:${ENV.PORT}`);
     });
 };
 
-const restartServer = (): void => {
-    console.log('Restarting server...');
-    startServer();
-};
+// const restartServer = (): void => {
+//     console.log('Restarting server...');
+//     startServer();
+// };
 
 startServer();
 
-process.on('uncaughtException', (err: Error) => {
-    console.error('Uncaught Exception:', err);
-    restartServer();
-});
+// process.on('uncaughtException', (err: Error) => {
+//     console.error('Uncaught Exception:', err);
+//     restartServer();
+// });
 
-process.on(
-    'unhandledRejection',
-    (reason: unknown, _promise: Promise<unknown>) => {
-        console.error('Unhandled Rejection:', reason);
-        restartServer();
-    }
-);
+// process.on(
+//     'unhandledRejection',
+//     (reason: unknown, _promise: Promise<unknown>) => {
+//         console.error('Unhandled Rejection:', reason);
+//         restartServer();
+//     }
+// );

@@ -10,7 +10,7 @@ datasource db {
 
 model User {
   id         Int       @id @default(autoincrement()) @db.UnsignedInt
-  username   String    @unique(map: "username") @db.VarChar(100)
+  name   String    @unique(map: "name") @db.VarChar(100)
   password   String    @db.VarChar(255)
   created_at DateTime  @default(now()) @db.Timestamp(0)
   updated_at DateTime? @default(now()) @db.DateTime(0)
@@ -67,7 +67,7 @@ model Region {
   @@index([continent_id], map: "idx_region_continent_id")
 }
 
-model QuestionResults {
+model QuestionResult {
   id            Int          @id @default(autoincrement()) @db.UnsignedInt
   user_id       Int          @db.UnsignedInt
   country_id    Int          @db.UnsignedInt
