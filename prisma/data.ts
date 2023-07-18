@@ -9,53 +9,256 @@ type Continent = {
 
 export const CONTINENTS: Continent[] = [
     {
-        name: { en: "America", es: "América", fr: "Amérique", it: "America" },
+        name: { en: 'America', es: 'América', fr: 'Amérique', it: 'America' },
         regions: [
-            { en : "North America", es: "América del Norte", fr: "Amérique du Nord", it: "America del Nord" },
-            { en : "Central America", es: "América Central", fr: "Amérique centrale", it: "America Centrale" },
-            { en : "South America", es: "América del Sur", fr: "Amérique du Sud", it: "America del Sud" },
-            { en : "Caribbean", es: "Caribe", fr: "Caraïbes", it: "Caraibi" },
-        ],
+            {
+                en: 'North America',
+                es: 'América del Norte',
+                fr: 'Amérique du Nord',
+                it: 'America del Nord'
+            },
+            {
+                en: 'Central America',
+                es: 'América Central',
+                fr: 'Amérique centrale',
+                it: 'America Centrale'
+            },
+            {
+                en: 'South America',
+                es: 'América del Sur',
+                fr: 'Amérique du Sud',
+                it: 'America del Sud'
+            },
+            { en: 'Caribbean', es: 'Caribe', fr: 'Caraïbes', it: 'Caraibi' }
+        ]
     },
     {
-        name: { en: "Africa", es: "África", fr: "L'Afrique", it: "Africa" },
+        name: { en: 'Africa', es: 'África', fr: "L'Afrique", it: 'Africa' },
         regions: [
-            { en: "North Africa", es: "Norte de África", fr: "Afrique du Nord", it: "Africa settentrionale" },
-            { en: "West Africa", es: "África Occidental", fr: "Afrique de l'Ouest", it: "Africa occidentale" },
-            { en: "Central Africa", es: "África Central", fr: "Afrique centrale", it: "Africa centrale" },
-            { en: "East Africa", es: "África Oriental", fr: "Afrique de l'Est", it: "Africa orientale" },
-            { en: "Southern Africa", es: "África Austral", fr: "Afrique australe", it: "Africa meridionale" },
-        ],
+            {
+                en: 'North Africa',
+                es: 'Norte de África',
+                fr: 'Afrique du Nord',
+                it: 'Africa settentrionale'
+            },
+            {
+                en: 'West Africa',
+                es: 'África Occidental',
+                fr: "Afrique de l'Ouest",
+                it: 'Africa occidentale'
+            },
+            {
+                en: 'Central Africa',
+                es: 'África Central',
+                fr: 'Afrique centrale',
+                it: 'Africa centrale'
+            },
+            {
+                en: 'East Africa',
+                es: 'África Oriental',
+                fr: "Afrique de l'Est",
+                it: 'Africa orientale'
+            },
+            {
+                en: 'Southern Africa',
+                es: 'África Austral',
+                fr: 'Afrique australe',
+                it: 'Africa meridionale'
+            }
+        ]
     },
     {
-        name: { en: "Asia", es: "Asia", fr: "Asie", it: "Asia" },
+        name: { en: 'Asia', es: 'Asia', fr: 'Asie', it: 'Asia' },
         regions: [
-            { en: "West Asia", es: "Asia Occidental", fr: "Asie de l'Ouest", it: "Asia occidentale" },
-            { en: "Central Asia", es: "Asia Central", fr: "Asie centrale", it: "Asia centrale" },
-            { en: "South Asia", es: "Asia Meridional", fr: "Asie du Sud", it: "Asia meridionale" },
-            { en: "East Asia", es: "Asia Oriental", fr: "Asie de l'Est", it: "Asia orientale" },
-            { en: "Southeast Asia", es: "Sudeste Asiático", fr: "Asie du Sud-Est", it: "Asia sudorientale" },
-        ],
+            {
+                en: 'West Asia',
+                es: 'Asia Occidental',
+                fr: "Asie de l'Ouest",
+                it: 'Asia occidentale'
+            },
+            {
+                en: 'Central Asia',
+                es: 'Asia Central',
+                fr: 'Asie centrale',
+                it: 'Asia centrale'
+            },
+            {
+                en: 'Southern Asia',
+                es: 'Asia Meridional',
+                fr: 'Asie du Sud',
+                it: 'Asia meridionale'
+            },
+            {
+                en: 'East Asia',
+                es: 'Asia Oriental',
+                fr: "Asie de l'Est",
+                it: 'Asia orientale'
+            },
+            {
+                en: 'Southeast Asia',
+                es: 'Sudeste Asiático',
+                fr: 'Asie du Sud-Est',
+                it: 'Asia sudorientale'
+            }
+        ]
     },
     {
-        name: { en: "Europe", es: "Europa", fr: "Europe", it: "Europa" },
+        name: { en: 'Europe', es: 'Europa', fr: 'Europe', it: 'Europa' },
         regions: [
-            { en: "Western Europe", es: "Europa Occidental", fr: "Europe de l'Ouest", it: "Europa occidentale" },
-            { en: "Eastern Europe", es: "Europa del Este", fr: "Europe de l'Est", it: "Europa orientale" },
-            { en: "Northern Europe", es: "Europa del Norte", fr: "Europe du Nord", it: "Europa del Nord" },
-            { en: "Southern Europe", es: "Europa del Sur", fr: "Europe du Sud", it: "Europa meridionale" },
-            { en: "Central Europe", es: "Europa Central", fr: "Europe centrale", it: "Europa centrale" },
-        ],
+            {
+                en: 'Western Europe',
+                es: 'Europa Occidental',
+                fr: "Europe de l'Ouest",
+                it: 'Europa occidentale'
+            },
+            {
+                en: 'Eastern Europe',
+                es: 'Europa del Este',
+                fr: "Europe de l'Est",
+                it: 'Europa orientale'
+            },
+            {
+                en: 'Northern Europe',
+                es: 'Europa del Norte',
+                fr: 'Europe du Nord',
+                it: 'Europa del Nord'
+            },
+            {
+                en: 'Southern Europe',
+                es: 'Europa del Sur',
+                fr: 'Europe du Sud',
+                it: 'Europa meridionale'
+            },
+            {
+                en: 'Central Europe',
+                es: 'Europa Central',
+                fr: 'Europe centrale',
+                it: 'Europa centrale'
+            }
+        ]
     },
     {
-        name: { en: "Oceania", es: "Oceanía", fr: "Océanie", it: "Oceania" },
+        name: { en: 'Oceania', es: 'Oceanía', fr: 'Océanie', it: 'Oceania' },
         regions: [
-            { en: "Australasia", es: "Australasia", fr: "Australasie", it: "Australasia" },
-            { en: "Melanesia", es: "Melanesia", fr: "Mélanésie", it: "Melanesia" },
-            { en: "Micronesia", es: "Micronesia", fr: "Micronésie", it: "Micronesia" },
-            { en: "Polynesia", es: "Polinesia", fr: "Polynésie", it: "Polinesia" },
-        ],
+            {
+                en: 'Australasia',
+                es: 'Australasia',
+                fr: 'Australasie',
+                it: 'Australasia'
+            },
+            {
+                en: 'Melanesia',
+                es: 'Melanesia',
+                fr: 'Mélanésie',
+                it: 'Melanesia'
+            },
+            {
+                en: 'Micronesia',
+                es: 'Micronesia',
+                fr: 'Micronésie',
+                it: 'Micronesia'
+            },
+            {
+                en: 'Polynesia',
+                es: 'Polinesia',
+                fr: 'Polynésie',
+                it: 'Polinesia'
+            }
+        ]
+    }
+];
+
+type Currency = {
+    name: string;
+    symbol: string;
+};
+
+export const CURRENCIES: Currency[] = [
+    {
+        name: 'Afghan afghani',
+        symbol: '؋'
     },
+    {
+        name: 'South African rand',
+        symbol: 'R'
+    }
+];
+
+type Country = {
+    code: string;
+    name: Translation;
+    capital: Translation;
+    official_name: Translation;
+    region: string;
+    population: number;
+    google_maps_link: string;
+    flag: string;
+    currencies: Currency[];
+};
+
+export const COUNTRIES: Country[] = [
+    {
+        code: 'AFG',
+        name: {
+            en: 'Afghanistan',
+            es: 'Afganistán',
+            fr: 'Afghanistan',
+            it: 'Afghanistan'
+        },
+        capital: {
+            fr: 'Kaboul',
+            en: 'Kabul',
+            es: '',
+            it: ''
+        },
+        official_name: {
+            fr: "République islamique d'Afghanistan",
+            en: 'Afghanistan',
+            es: '',
+            it: ''
+        },
+        region: 'Southern Asia',
+        population: 38928346,
+        google_maps_link: 'https://goo.gl/maps/1Z2Z2Z2Z2Z2Z2Z2Z2',
+        flag: 'https://restcountries.eu/data/afg.svg',
+        currencies: [
+            {
+                name: 'Afghan afghani',
+                symbol: '؋'
+            }
+        ]
+    },
+    {
+        code: 'ZAF',
+        name: {
+            en: 'Albania',
+            es: 'Albania',
+            fr: 'Afrique du Sud',
+            it: 'Albania'
+        },
+        capital: {
+            fr: 'Pretoria',
+            en: '',
+            es: '',
+            it: ''
+        },
+        official_name: {
+            fr: "République d'Afrique du Sud",
+            en: '',
+            es: '',
+            it: ''
+        },
+        region: 'Southern Africa',
+        population: 59308690,
+        google_maps_link: 'https://goo.gl/maps/3Z4Q2Z2Z2Z2Z2Z2Z2',
+        flag: 'https://restcountries.eu/data/zaf.svg',
+        currencies: [
+            {
+                name: 'South African rand',
+                symbol: 'R'
+            }
+        ]
+    }
 ];
 
 // type Country = {

@@ -1,7 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
-import { Languages, t } from '../utils/common';
+import { tokenMiddleware } from '../utils/authMiddlewares';
+import {
+    DefaultLang,
+    Languages,
+    LearningTypes,
+    Scores,
+    t
+} from '../utils/common';
 
 const countryRouter = express.Router();
 const prisma = new PrismaClient();
@@ -15,7 +22,7 @@ countryRouter.get('/', async (req: Request, res: Response) => {
                 message: 'The max parameter must be a positive number'
             })
             .optional(),
-        lang: z.enum(Languages).default('en')
+        lang: z.enum(Languages).default(DefaultLang)
     });
 
     const result = QuerySchema.safeParse(req.query);
@@ -79,7 +86,7 @@ countryRouter.get('/:code', async (req: Request, res: Response) => {
     });
 
     const QuerySchema = z.object({
-        lang: z.enum(Languages).default('en')
+        lang: z.enum(Languages).default(DefaultLang)
     });
 
     const paramsResult = ParamsSchema.safeParse(req.params);
@@ -148,5 +155,58 @@ countryRouter.get('/:code', async (req: Request, res: Response) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+countryRouter.post(
+    '/:country_id/score',
+    [tokenMiddleware],
+    async (req: Request, res: Response) => {
+        const paramsSchema = z.object({
+            country_id: z.preprocess(Number, z.number().nonnegative())
+        });
+        const bodySchema = z.object({
+            result: z.enum(Scores),
+            id: z.number().nonnegative()
+        });
+        const querySchema = z.object({
+            type: z.enum(LearningTypes)
+        });
+
+        const resultParams = paramsSchema.safeParse(req.params);
+        if (!resultParams.success) {
+            return res
+                .status(406)
+                .json({ success: false, error: resultParams.error });
+        }
+
+        const resultBody = bodySchema.safeParse(req.body);
+        if (!resultBody.success) {
+            return res
+                .status(406)
+                .json({ success: false, error: resultBody.error });
+        }
+
+        const resultQuery = querySchema.safeParse(req.query);
+        if (!resultQuery.success) {
+            return res
+                .status(406)
+                .json({ success: false, error: resultQuery.error });
+        }
+
+        const { country_id } = resultParams.data;
+        const { result, id } = resultBody.data;
+        const { type } = resultQuery.data;
+
+        await prisma.questionResult.create({
+            data: {
+                user_id: id,
+                country_id,
+                learning_type: type,
+                result
+            }
+        });
+
+        return res.status(200).json({ success: true });
+    }
+);
 
 export default countryRouter;

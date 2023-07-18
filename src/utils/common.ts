@@ -33,7 +33,6 @@ export const Scores = ['succeeded', 'medium', 'failed'] as const;
 export type Score = (typeof Scores)[number];
 
 export const LearningTypes = ['flag', 'capital'] as const;
-export const DefaultLearningType = 'flag' as const;
 export type LearningType = (typeof LearningTypes)[number];
 
 export const calculateScore = (

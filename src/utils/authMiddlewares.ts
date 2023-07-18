@@ -15,8 +15,8 @@ export const tokenMiddleware = (
         [HEADER_NAME]: z.string().startsWith('Bearer ').nonempty()
     });
 
-    const paramsSchema = z.object({
-        id: z.string().nonempty()
+    const bodySchema = z.object({
+        id: z.number().nonnegative()
     });
 
     const result = headersSchema.safeParse(req.headers);
@@ -31,20 +31,20 @@ export const tokenMiddleware = (
         });
     }
 
-    const resultParams = paramsSchema.safeParse(req.params);
+    const resultBody = bodySchema.safeParse(req.body);
 
-    if (!resultParams.success) {
+    if (!resultBody.success) {
         return res.status(401).json({
             success: false,
             error: {
                 code: 'user_id_missing',
-                message: `This route requires a non-empty 'id' parameter`
+                message: `This route requires a non-empty 'id' body parameter`
             }
         });
     }
 
     const token = result.data[HEADER_NAME].split(' ')[1];
-    const id = resultParams.data.id;
+    const id = resultBody.data.id;
 
     if (!id) {
         return res.status(401).send({ message: 'User ID missing' });
@@ -54,6 +54,7 @@ export const tokenMiddleware = (
     }
     try {
         const decoded = jwt.verify(token, ENV.JWT_TOKEN);
+        console.log(decoded);
         if (decoded.id != id) {
             return res.status(403).send({ message: 'Forbidden' });
         }
