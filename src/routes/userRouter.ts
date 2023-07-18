@@ -2,14 +2,16 @@ import { PrismaClient } from '@prisma/client';
 import express, { Request, Response } from 'express';
 import { DateTime } from 'luxon';
 import { z } from 'zod';
-import { tokenMiddleware } from '../utils/authMiddlewares';
+import * as userModel from '../models/user.model';
+import { AuthMiddleware } from '../utils/authMiddlewares';
 import {
     DefaultLang,
-    DefaultRegion,
     Languages,
     LearningTypes,
-    Regions,
-    hashPassword
+    calculateScore,
+    getNewCountryToPlay,
+    hashPassword,
+    t
 } from '../utils/common';
 
 const jwt = require('jsonwebtoken');
@@ -23,14 +25,14 @@ userRouter.get('/', async (req: Request, res: Response) => {
 
 userRouter.get(
     '/scores',
-    tokenMiddleware,
+    AuthMiddleware,
     async (req: Request, res: Response) => {
         const querySchema = z.object({
-            sort: z.string().optional(),
-            type: z.enum(LearningTypes)
-        });
-        const bodySchema = z.object({
-            id: z.number().nonnegative()
+            type: z.enum(LearningTypes),
+            continent: z
+                .preprocess(Number, z.number().nonnegative())
+                .default(-1)
+                .optional()
         });
 
         const result = querySchema.safeParse(req.query);
@@ -39,72 +41,86 @@ userRouter.get(
                 .status(406)
                 .json({ success: false, error: result.error });
         }
-        const resultBody = bodySchema.safeParse(req.body);
-        if (!resultBody.success) {
-            return res
-                .status(406)
-                .json({ success: false, error: resultBody.error });
+
+        const { id } = req.app.get('auth');
+
+        const { type, continent } = result.data;
+
+        const scores = await userModel.getScores(id, type, continent);
+
+        for (const score in scores) {
+            scores[score].score = calculateScore(
+                scores[score]['succeeded'],
+                scores[score]['medium'],
+                scores[score]['failed']
+            );
+            delete scores[score]['succeeded'];
+            delete scores[score]['medium'];
+            delete scores[score]['failed'];
         }
 
-        const { id } = resultBody.data;
-        const { sort, type } = result.data;
-
-        const scores = await prisma.questionResult.aggregate({
-            where: {
-                id,
-                learning_type: type
-            },
-            _count: {
-                result: true
-            }
-        });
-        console.log(scores);
+        res.status(200).json({ success: true, scores });
     }
 );
 
-userRouter.get(
-    '/play',
-    tokenMiddleware,
-    async (req: Request, res: Response) => {
-        const querySchema = z.object({
-            lang: z.enum(Languages).default(DefaultLang),
-            region: z.enum(Regions).default(DefaultRegion)
-        });
-        const bodySchema = z.object({
-            id: z.number().nonnegative(),
-            learning_type: z.enum(LearningTypes)
-        });
+userRouter.get('/play', AuthMiddleware, async (req: Request, res: Response) => {
+    const querySchema = z.object({
+        lang: z.enum(Languages).default(DefaultLang),
+        continent: z.preprocess(Number, z.number().nonnegative()).default(-1),
+        type: z.enum(LearningTypes)
+    });
 
-        const resultQuery = querySchema.safeParse(req.query);
-        if (!resultQuery.success) {
-            return res
-                .status(406)
-                .json({ success: false, error: resultQuery.error });
-        }
-        const resultBody = bodySchema.safeParse(req.body);
-        if (!resultBody.success) {
-            return res
-                .status(406)
-                .json({ success: false, error: resultBody.error });
-        }
-
-        const { lang, region } = resultQuery.data;
-        const { id, learning_type } = resultBody.data;
-
-        // userModel.findNewCountry(
-        //     parseInt(id),
-        //     learning_type,
-        //     lang,
-        //     region,
-        //     (err: Error, country: Country) => {
-        //         if (err) {
-        //             return res.status(500).json({ error: err.message });
-        //         }
-        //         res.status(200).json({ country: country });
-        //     }
-        // );
+    const resultQuery = querySchema.safeParse(req.query);
+    if (!resultQuery.success) {
+        return res
+            .status(406)
+            .json({ success: false, error: resultQuery.error });
     }
-);
+
+    const { lang, continent, type } = resultQuery.data;
+    const { id } = req.app.get('auth');
+
+    const scores = await userModel.getScores(id, type, continent);
+
+    for (const score in scores) {
+        scores[score].score = calculateScore(
+            scores[score]['succeeded'],
+            scores[score]['medium'],
+            scores[score]['failed']
+        );
+        delete scores[score]['succeeded'];
+        delete scores[score]['medium'];
+        delete scores[score]['failed'];
+    }
+
+    const newCountryId = getNewCountryToPlay(scores);
+
+    const newCountry = await prisma.country.findUnique({
+        where: {
+            id: newCountryId
+        },
+        include: {
+            region: true,
+            countryCurrencies: true
+        }
+    });
+
+    if (!newCountry) {
+        return res
+            .status(404)
+            .json({ success: false, error: 'Country not found' });
+    }
+
+    const finalCountry = {
+        id: newCountry.id,
+        code: newCountry.code,
+        name: t(newCountry.name, lang),
+        capital: t(newCountry.capital, lang),
+        flag: newCountry.flag
+    };
+
+    res.status(200).json({ success: true, country: finalCountry });
+});
 
 userRouter.post('/', async (req: Request, res: Response) => {
     const bodySchema = z.object({
@@ -148,7 +164,7 @@ userRouter.post('/', async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, user: newUser });
 });
 
-userRouter.put('/', tokenMiddleware, async (req: Request, res: Response) => {
+userRouter.put('/', AuthMiddleware, async (req: Request, res: Response) => {
     const bodySchema = z.object({
         user: z.object({
             id: z.number(),

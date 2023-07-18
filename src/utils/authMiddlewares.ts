@@ -54,7 +54,6 @@ export const tokenMiddleware = (
     }
     try {
         const decoded = jwt.verify(token, ENV.JWT_TOKEN);
-        console.log(decoded);
         if (decoded.id != id) {
             return res.status(403).send({ message: 'Forbidden' });
         }

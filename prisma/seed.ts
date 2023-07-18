@@ -52,10 +52,7 @@ async function main() {
     }
 
     for (const country of COUNTRIES) {
-        console.log(country.region);
-        console.log(regions);
         const regionId = regions[country.region];
-        console.log(regionId);
         const insertedCountry = await prisma.country.create({
             data: {
                 code: country.code,
@@ -78,10 +75,16 @@ async function main() {
                 where: { symbol: currency.symbol }
             });
 
+            if (!insertedCurrency) {
+                throw new Error(
+                    `Currency with symbol ${currency.symbol} not found`
+                );
+            }
+
             await prisma.countryCurrency.create({
                 data: {
                     country_id: insertedCountry.id,
-                    currency_id: insertedCurrency!.id
+                    currency_id: insertedCurrency.id
                 }
             });
         }

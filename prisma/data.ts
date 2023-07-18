@@ -181,6 +181,10 @@ export const CURRENCIES: Currency[] = [
     {
         name: 'South African rand',
         symbol: 'R'
+    },
+    {
+        name: 'Euro',
+        symbol: '€'
     }
 ];
 
@@ -256,6 +260,37 @@ export const COUNTRIES: Country[] = [
             {
                 name: 'South African rand',
                 symbol: 'R'
+            }
+        ]
+    },
+    {
+        code: 'ALB',
+        name: {
+            en: 'Albania',
+            es: 'Albania',
+            fr: 'Albanie',
+            it: 'Albania'
+        },
+        capital: {
+            fr: 'Tirana',
+            en: '',
+            es: '',
+            it: ''
+        },
+        official_name: {
+            fr: "République d'Albanie",
+            en: '',
+            es: '',
+            it: ''
+        },
+        region: 'Southern Europe',
+        population: 2877797,
+        google_maps_link: 'https://goo.gl/maps/4Z5Q2Z2Z2Z2Z2Z2Z2',
+        flag: 'https://restcountries.eu/data/alb.svg',
+        currencies: [
+            {
+                name: 'Euro',
+                symbol: '€'
             }
         ]
     }

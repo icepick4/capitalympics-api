@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { Level, UserScore } from '../types/user';
+import { Level } from '../types/user';
 
 const bcrypt = require('bcrypt');
 
@@ -18,7 +18,7 @@ export const comparePasswords = async (
 export const Languages = ['en', 'fr', 'es', 'it'] as const;
 export const DefaultLang = 'en' as const;
 export type Lang = (typeof Languages)[number];
-export const Regions = [
+export const Continents = [
     'World',
     'Africa',
     'Americas',
@@ -26,8 +26,8 @@ export const Regions = [
     'Europe',
     'Oceania'
 ] as const;
-export const DefaultRegion = 'Europe' as const;
-export type Region = (typeof Regions)[number];
+export const DefaultContinent = 'Europe' as const;
+export type Continent = (typeof Continents)[number];
 
 export const Scores = ['succeeded', 'medium', 'failed'] as const;
 export type Score = (typeof Scores)[number];
@@ -35,15 +35,22 @@ export type Score = (typeof Scores)[number];
 export const LearningTypes = ['flag', 'capital'] as const;
 export type LearningType = (typeof LearningTypes)[number];
 
+export type ScoreResult = {
+    count: number;
+    country_id: number;
+    result: Score;
+};
+
 export const calculateScore = (
     succeeded_count: number,
     medium_count: number,
     failed_count: number
 ): Level => {
     let score: number = 0;
-
     const total = succeeded_count + medium_count + failed_count;
-
+    if (total === 0) {
+        return -1;
+    }
     const succeeded_percentage = succeeded_count / total;
     const medium_percentage = medium_count / total;
     const failed_percentage = failed_count / total;
@@ -55,7 +62,6 @@ export const calculateScore = (
     );
     const weighted_medium_percentage = Math.min(medium_percentage * 2, 1);
     const weighted_failed_percentage = failed_percentage * 4;
-
     // -- Final score -- //
     // The score is calculated with a logarithmic function to avoid
     // achieving a high score with a few questions
@@ -66,7 +72,6 @@ export const calculateScore = (
             Math.log10(succeeded_count + 1)) /
             1.5
     );
-
     // Score between 0 and 100
     return Math.floor(Math.max(0, Math.min(score, 100))) as Level;
 };
@@ -130,8 +135,14 @@ export const getLevelName = (level: Level): string => {
     }
 };
 
-export const getNewCountryToPlay = (userScores: UserScore[]): string => {
-    //userScores are sorted by level (level between -1 and 10)
+export const getNewCountryToPlay = (
+    userScores: {
+        [key: string]: number;
+        id: number;
+    }[]
+): number => {
+    userScores.sort((a, b) => b.score - a.score);
+    console.log(userScores);
     const lowPartWeight = 0.8;
     const half = Math.ceil(userScores.length / 2);
     const firstHalf = userScores.slice(0, half);
@@ -139,12 +150,10 @@ export const getNewCountryToPlay = (userScores: UserScore[]): string => {
     const random = Math.random();
     if (random < lowPartWeight) {
         //select a random country from the first half
-        return firstHalf[Math.floor(Math.random() * firstHalf.length)]
-            .country_code;
+        return firstHalf[Math.floor(Math.random() * firstHalf.length)].id;
     }
     // select a random country from the second half
-    return secondHalf[Math.floor(Math.random() * secondHalf.length)]
-        .country_code;
+    return secondHalf[Math.floor(Math.random() * secondHalf.length)].id;
 };
 
 export function t(translations: Prisma.JsonValue, lang: Lang): string | null {

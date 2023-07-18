@@ -35,8 +35,10 @@ model Country {
   flag              String            @db.VarChar(255)
   countryCurrencies CountryCurrency[]
   region            Region            @relation(fields: [region_id], references: [id])
+  QuestionResult    QuestionResult[]  
 
   @@index([region_id], map: "idx_country_region_id")
+
 }
 
 model CountryCurrency {
@@ -74,6 +76,9 @@ model QuestionResult {
   learning_type LearningType @default(capital)
   result        Score        @default(succeeded)
   created_at    DateTime     @default(now()) @db.Timestamp(0)
+  country      Country      @relation(fields: [country_id], references: [id])
+
+  @@index([country_id])
 }
 
 enum Language {

@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
-import { tokenMiddleware } from '../utils/authMiddlewares';
+import { AuthMiddleware } from '../utils/authMiddlewares';
 import {
     DefaultLang,
     Languages,
@@ -158,14 +158,13 @@ countryRouter.get('/:code', async (req: Request, res: Response) => {
 
 countryRouter.post(
     '/:country_id/score',
-    [tokenMiddleware],
+    [AuthMiddleware],
     async (req: Request, res: Response) => {
         const paramsSchema = z.object({
             country_id: z.preprocess(Number, z.number().nonnegative())
         });
         const bodySchema = z.object({
-            result: z.enum(Scores),
-            id: z.number().nonnegative()
+            result: z.enum(Scores)
         });
         const querySchema = z.object({
             type: z.enum(LearningTypes)
@@ -193,7 +192,8 @@ countryRouter.post(
         }
 
         const { country_id } = resultParams.data;
-        const { result, id } = resultBody.data;
+        const { result } = resultBody.data;
+        const { id } = req.app.get('auth');
         const { type } = resultQuery.data;
 
         await prisma.questionResult.create({
