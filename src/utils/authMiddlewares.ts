@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from 'express';
 import { JsonWebTokenError, TokenExpiredError, verify } from 'jsonwebtoken';
 import { z } from 'zod';
 import { ENV } from '../env';
-const jwt = require('jsonwebtoken');
 
 export const tokenMiddleware = (
     req: Request,
@@ -53,10 +52,11 @@ export const tokenMiddleware = (
         return res.status(401).send({ message: 'Token missing' });
     }
     try {
-        const decoded = jwt.verify(token, ENV.JWT_TOKEN);
-        if (decoded.id != id) {
+        const decoded = verify(token, ENV.JWT_TOKEN);
+        if (typeof decoded === 'string' || decoded.id != id) {
             return res.status(403).send({ message: 'Forbidden' });
         }
+
         next();
     } catch (err) {
         return res.status(401).send({ message: 'Invalid token' });

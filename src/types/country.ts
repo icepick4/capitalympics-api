@@ -10,6 +10,22 @@ export interface Country {
     currencies: Currency[];
 }
 
+export interface CountryDetails {
+    name: string;
+    alpha3Code: string;
+    flag: string;
+    score: number;
+    region: Region;
+}
+
+export type Region =
+    | 'Africa'
+    | 'Americas'
+    | 'Asia'
+    | 'Europe'
+    | 'Oceania'
+    | 'World';
+
 export interface Currency {
     name: string;
     symbol: string;

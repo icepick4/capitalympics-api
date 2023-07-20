@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS flag_scores (
   medium INT(11) NOT NULL DEFAULT 0,
   failed INT(11) NOT NULL DEFAULT 0,
   level INT(11) NOT NULL DEFAULT -1,
-  PRIMARY KEY (user_id, user_name, country_code),
+  PRIMARY KEY (user_id, country_code),
   FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS countries (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Init table translations
+
 CREATE TABLE IF NOT EXISTS translations (
   country_id INT(10) UNSIGNED NOT NULL,
   language VARCHAR(2) NOT NULL,

@@ -14,7 +14,6 @@ import {
     t
 } from '../utils/common';
 
-const jwt = require('jsonwebtoken');
 const userRouter = express.Router();
 const prisma = new PrismaClient();
 
@@ -67,26 +66,29 @@ const getScores = async (
 
     const arrayCountries = Array.from(Array(countriesCount).keys());
 
-    scores.forEach((score) => {
-        const countryId = score.country_id;
-        const result = score.result;
+    scores.forEach(
+        (score: {
+            country_id: any;
+            result: any;
+            _count: { result: number };
+        }) => {
+            const countryId = score.country_id;
+            const result = score.result;
 
-        const existingScore = scoreResults.find(
-            (item) => item.id === countryId
-        );
-        if (existingScore) {
-            existingScore[result] = score._count.result;
-        } else {
-            const newScore = {
-                id: countryId,
-                succeeded: 0,
-                medium: 0,
-                failed: 0
-            };
-            newScore[result] = score._count.result;
-            scoreResults.push(newScore);
+            const existingScore = scoreResults.find(
+                (item) => item.id === countryId
+            );
+            if (existingScore) {
+                existingScore[result] = score._count.result;
+            } else {
+                const newScore: { id: number; [key: string]: number } = {
+                    id: countryId
+                };
+                newScore[result] = score._count.result;
+                scoreResults.push(newScore);
+            }
         }
-    });
+    );
     arrayCountries.forEach((countryId) => {
         const existingScore = scoreResults.find(
             (item) => item.id === countryId + 1
@@ -168,7 +170,7 @@ userRouter.get(
 
         mappedScores.forEach((score) => {
             const country = countries.find(
-                (country) => country.id === score.id
+                (country: { id: number }) => country.id === score.id
             );
             if (country) {
                 score.name = t(country.name, lang)!;
