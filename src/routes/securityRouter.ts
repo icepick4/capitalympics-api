@@ -12,7 +12,7 @@ const securityRouter = express.Router();
 
 securityRouter.post('/login', async (req: Request, res: Response) => {
     const requestSchema = z.object({
-        name: z.string(),
+        username: z.string(),
         password: z.string()
     });
 
@@ -21,10 +21,10 @@ securityRouter.post('/login', async (req: Request, res: Response) => {
         return res.status(406).json({ error: result.error });
     }
 
-    const { name, password } = result.data;
+    const { username, password } = result.data;
 
     userModel.connect(
-        name,
+        username,
         password,
         DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss'),
         (err: Error | null, user: User | null) => {
