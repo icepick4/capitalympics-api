@@ -224,7 +224,7 @@ export const COUNTRIES: Country[] = [
         region: 'Southern Asia',
         population: 38928346,
         google_maps_link: 'https://goo.gl/maps/1Z2Z2Z2Z2Z2Z2Z2Z2',
-        flag: 'https://restcountries.eu/data/afg.svg',
+        flag: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Flag_of_the_Taliban.svg/320px-Flag_of_the_Taliban.svg.png',
         currencies: [
             {
                 name: 'Afghan afghani',
@@ -255,7 +255,7 @@ export const COUNTRIES: Country[] = [
         region: 'Southern Africa',
         population: 59308690,
         google_maps_link: 'https://goo.gl/maps/3Z4Q2Z2Z2Z2Z2Z2Z2',
-        flag: 'https://restcountries.eu/data/zaf.svg',
+        flag: 'https://flagcdn.com/w320/za.png',
         currencies: [
             {
                 name: 'South African rand',
@@ -286,7 +286,7 @@ export const COUNTRIES: Country[] = [
         region: 'Southern Europe',
         population: 2877797,
         google_maps_link: 'https://goo.gl/maps/4Z5Q2Z2Z2Z2Z2Z2Z2',
-        flag: 'https://restcountries.eu/data/alb.svg',
+        flag: 'https://flagcdn.com/w320/al.png',
         currencies: [
             {
                 name: 'Euro',

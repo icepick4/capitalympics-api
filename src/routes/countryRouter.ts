@@ -150,9 +150,9 @@ countryRouter.get('/:code', async (req: Request, res: Response) => {
             }))
         };
 
-        res.status(200).json(finalCountry);
+        res.status(200).json({ success: true, country: finalCountry });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
