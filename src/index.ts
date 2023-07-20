@@ -7,8 +7,9 @@ import continentRouter from './routes/continentRouter';
 import countryRouter from './routes/countryRouter';
 import userRouter from './routes/userRouter';
 
+import questionRouter from './routes/questionRouter';
 import securityRouter from './routes/securityRouter';
-import { corsMiddleware } from './utils/authMiddlewares';
+import { AuthMiddleware, corsMiddleware } from './utils/authMiddlewares';
 
 const app = express();
 const cors = require('cors');
@@ -19,6 +20,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use('/api', corsMiddleware, securityRouter);
+app.use('/api/questions', [corsMiddleware, AuthMiddleware], questionRouter);
 app.use('/api/users', corsMiddleware, userRouter);
 app.use('/api/continents', corsMiddleware, continentRouter);
 app.use('/api/countries', corsMiddleware, countryRouter);

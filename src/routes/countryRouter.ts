@@ -80,7 +80,6 @@ countryRouter.get('/', async (req: Request, res: Response) => {
 });
 
 countryRouter.get('/:code', async (req: Request, res: Response) => {
-    //get code in params and lang in query with zod
     const ParamsSchema = z.object({
         code: z.string().length(3)
     });
@@ -164,9 +163,7 @@ countryRouter.post(
             country_id: z.preprocess(Number, z.number().nonnegative())
         });
         const bodySchema = z.object({
-            result: z.enum(Scores)
-        });
-        const querySchema = z.object({
+            result: z.enum(Scores),
             type: z.enum(LearningTypes)
         });
 
@@ -184,17 +181,9 @@ countryRouter.post(
                 .json({ success: false, error: resultBody.error });
         }
 
-        const resultQuery = querySchema.safeParse(req.query);
-        if (!resultQuery.success) {
-            return res
-                .status(406)
-                .json({ success: false, error: resultQuery.error });
-        }
-
         const { country_id } = resultParams.data;
-        const { result } = resultBody.data;
+        const { result, type } = resultBody.data;
         const { id } = req.app.get('auth');
-        const { type } = resultQuery.data;
 
         await prisma.questionResult.create({
             data: {

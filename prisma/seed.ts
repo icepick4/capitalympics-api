@@ -9,6 +9,16 @@ async function truncate(...tables: string[]) {
             `ALTER TABLE ${table} AUTO_INCREMENT = 1;`
         );
     }
+    await prisma.$queryRawUnsafe(`CREATE VIEW vw_user_scores AS
+    SELECT 
+        user_id, 
+        country_id, 
+        learning_type,
+        SUM(CASE WHEN result = 'succeeded' THEN 1 ELSE 0 END) AS succeeded,
+        SUM(CASE WHEN result = 'medium' THEN 1 ELSE 0 END) AS medium,
+        SUM(CASE WHEN result = 'failed' THEN 1 ELSE 0 END) AS failed
+    FROM QuestionResult
+    GROUP BY user_id, country_id, learning_type;`);
 }
 
 async function main() {
