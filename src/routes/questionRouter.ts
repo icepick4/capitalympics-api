@@ -48,4 +48,16 @@ questionRouter.post('', async (req: Request, res: Response) => {
     return res.status(200).json({ success: true });
 });
 
+questionRouter.delete('', async (req: Request, res: Response) => {
+    const { id } = req.app.get('auth');
+
+    await prisma.questionResult.deleteMany({
+        where: {
+            user_id: parseInt(id)
+        }
+    });
+
+    return res.status(200).json({ success: true });
+});
+
 export default questionRouter;
