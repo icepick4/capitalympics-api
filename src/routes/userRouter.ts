@@ -147,7 +147,7 @@ userRouter.post(
             null,
             (err: Error | null, exists: boolean) => {
                 if (err) {
-                    return res.status(500).json({ error: err.message });
+                    return res.status(500).json({ success: false, error: err.message });
                 }
 
                 if (exists) {
@@ -157,10 +157,10 @@ userRouter.post(
                 } else {
                     userModel.create(user, (err: Error, user: User) => {
                         if (err) {
-                            return res.status(500).json({ error: err.message });
+                            return res.status(500).json({ success: false, error: err.message });
                         }
 
-                        res.status(200).json({ user });
+                        res.status(200).json({ success: true, user });
                     });
                 }
             }
@@ -242,16 +242,16 @@ userRouter.put(
 
         userModel.exists(user.name, user.id, (err: Error, exists: boolean) => {
             if (err) {
-                return res.status(500).json({ error: err.message });
+                return res.status(500).json({ success: false, error: err.message });
             }
             if (exists) {
-                return res.status(409).json({ error: 'User already exists' });
+                return res.status(409).json({ success: false, error: 'User already exists' });
             } else {
                 userModel.update(user, userId, (err: Error) => {
                     if (err) {
-                        return res.status(500).json({ error: err.message });
+                        return res.status(500).json({ success: false, error: err.message });
                     }
-                    res.status(200).send();
+                    res.status(200).send({ success: true });
                 });
             }
         });
