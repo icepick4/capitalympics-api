@@ -1,9 +1,8 @@
 export interface Country {
-    name: string;
-    official_name: string;
-    capital: string;
-    region: string;
-    subregion: string;
+    name: JSON;
+    official_name: JSON;
+    capital: JSON;
+    continent_id: number;
     population: number;
     google_maps_link: string;
     flag: string;
@@ -28,7 +27,6 @@ export type Region =
     | 'World';
 
 export interface Currency {
-    country_code: string;
     name: string;
     symbol: string;
     id: number;

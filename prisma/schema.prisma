@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  name   String        @unique(map: "name") @db.VarChar(100)
+  password   String    @db.VarChar(255)
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @db.DateTime(0)
+  language   Language  @default(en)
+}
+
+model Continent {
+  id      Int      @id @default(autoincrement()) @db.UnsignedInt
+  name    Json
+  regions Region[]
+}
+
+model Country {
+  id                Int               @id @default(autoincrement()) @db.UnsignedInt
+  code              String            @unique(map: "code") @db.VarChar(3)
+  name              Json
+  capital           Json
+  official_name     Json
+  region_id         Int               @db.UnsignedInt
+  population        Int               @db.UnsignedInt
+  google_maps_link  String            @db.VarChar(255)
+  flag              String            @db.VarChar(255)
+  countryCurrencies CountryCurrency[]
+  region            Region            @relation(fields: [region_id], references: [id])
+  QuestionResult    QuestionResult[]
+  @@index([region_id], map: "idx_country_region_id")
+}
+
+model CountryCurrency {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  country_id  Int      @db.UnsignedInt
+  currency_id Int      @db.UnsignedInt
+  country     Country  @relation(fields: [country_id], references: [id])
+  currency    Currency @relation(fields: [currency_id], references: [id])
+  @@index([country_id], map: "idx_countrycurrency_country_id")
+  @@index([currency_id], map: "idx_countrycurrency_currency_id")
+}
+
+model Currency {
+  id        Int               @id @default(autoincrement()) @db.UnsignedInt
+  name      String            @db.VarChar(100)
+  symbol    String            @unique(map: "symbol") @db.VarChar(100)
+  countries CountryCurrency[]
+}
+
+model Region {
+  id           Int       @id @default(autoincrement()) @db.UnsignedInt
+  name         Json
+  continent    Continent @relation(fields: [continent_id], references: [id])
+  continent_id Int       @db.UnsignedInt
+  Country      Country[]
+  @@index([continent_id], map: "idx_region_continent_id")
+}
+
+model QuestionResult {
+  id            Int          @id @default(autoincrement()) @db.UnsignedInt
+  user_id       Int          @db.UnsignedInt
+  country_id    Int          @db.UnsignedInt
+  learning_type LearningType @default(capital)
+  result        Score        @default(succeeded)
+  created_at    DateTime     @default(now()) @db.Timestamp(0)
+  country      Country      @relation(fields: [country_id], references: [id])
+  @@index([country_id])
+}
+
+enum Language {
+  en
+  es
+  it
+  fr
+}
+
+enum LearningType {
+  capital
+  flag
+}
+
+enum Score {
+  succeeded
+  medium
+  failed
+}

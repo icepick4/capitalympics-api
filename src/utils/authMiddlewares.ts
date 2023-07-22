@@ -2,16 +2,48 @@ import { NextFunction, Request, Response } from 'express';
 import { JsonWebTokenError, TokenExpiredError, verify } from 'jsonwebtoken';
 import { z } from 'zod';
 import { ENV } from '../env';
-import { User } from '../types/user';
 
 export const tokenMiddleware = (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
-    const auth = req.headers.authorization;
-    const token = auth && auth.split(' ')[1];
-    const id = req.params.id;
+    const HEADER_NAME = 'authorization';
+
+    const headersSchema = z.object({
+        [HEADER_NAME]: z.string().startsWith('Bearer ').nonempty()
+    });
+
+    const bodySchema = z.object({
+        id: z.number().nonnegative()
+    });
+
+    const result = headersSchema.safeParse(req.headers);
+
+    if (!result.success) {
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: 'access_token_missing',
+                message: `This route requires a non-empty '${HEADER_NAME}' header`
+            }
+        });
+    }
+
+    const resultBody = bodySchema.safeParse(req.body);
+
+    if (!resultBody.success) {
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: 'user_id_missing',
+                message: `This route requires a non-empty 'id' body parameter`
+            }
+        });
+    }
+
+    const token = result.data[HEADER_NAME].split(' ')[1];
+    const id = resultBody.data.id;
 
     if (!id) {
         return res.status(401).send({ message: 'User ID missing' });
@@ -72,41 +104,7 @@ export function AuthMiddleware(
     }
 }
 
-export const userTypeMiddleware = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    const user: User = req.body.user;
-    if (req.method === 'POST' && req.url === '/') {
-        if (
-            !user ||
-            typeof user !== 'object' ||
-            !('name' in user) ||
-            !('password' in user) ||
-            !('created_at' in user)
-        ) {
-            return res.status(400).send('Invalid user object for POST /users');
-        } else {
-            return next();
-        }
-    }
-    if (
-        !user ||
-        typeof user !== 'object' ||
-        !('id' in user) ||
-        !('name' in user) ||
-        !('flag_score' in user) ||
-        !('capital_score' in user) ||
-        !('last_activity' in user) ||
-        !('created_at' in user)
-    ) {
-        return res.status(400).send('Invalid user object');
-    }
-    next();
-};
-
-export const corsMiddleware = (
+export const CORSMiddleware = (
     req: Request,
     res: Response,
     next: NextFunction
