@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../src/prisma';
 import { CONTINENTS, COUNTRIES, CURRENCIES } from './data';
-const prisma = new PrismaClient();
 
 async function truncate(...tables: string[]) {
     for (const table of tables) {
@@ -9,10 +8,11 @@ async function truncate(...tables: string[]) {
             `ALTER TABLE ${table} AUTO_INCREMENT = 1;`
         );
     }
+    await prisma.$queryRawUnsafe(`DROP VIEW IF EXISTS vw_user_scores;`);
     await prisma.$queryRawUnsafe(`CREATE VIEW vw_user_scores AS
-    SELECT 
-        user_id, 
-        country_id, 
+    SELECT
+        user_id,
+        country_id,
         learning_type,
         SUM(CASE WHEN result = 'succeeded' THEN 1 ELSE 0 END) AS succeeded,
         SUM(CASE WHEN result = 'medium' THEN 1 ELSE 0 END) AS medium,
@@ -81,8 +81,8 @@ async function main() {
         });
 
         for (const currency of country.currencies) {
-            const insertedCurrency = await prisma.currency.findUnique({
-                where: { symbol: currency.symbol }
+            const insertedCurrency = await prisma.currency.findFirst({
+                where: { name: currency.name }
             });
 
             if (!insertedCurrency) {
