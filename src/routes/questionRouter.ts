@@ -31,7 +31,7 @@ questionRouter.post('', async (req: Request, res: Response) => {
         type: z.enum(LearningTypes)
     });
 
-    const result = BodySchema.safeParse(req.query);
+    const result = BodySchema.safeParse(req.body);
     if (!result.success) {
         return res.status(406).json({ success: false, error: result.error });
     }
