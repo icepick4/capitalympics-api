@@ -4,15 +4,15 @@ import { DateTime } from 'luxon';
 import { omit, pick } from 'radash';
 import { z } from 'zod';
 import { ENV } from '../env';
-import * as userModel from '../models/user.model';
-import { User } from '../types/user';
+import prisma from '../prisma';
 import { AuthMiddleware } from '../utils/authMiddlewares';
+import { DefaultLang, Languages, comparePasswords } from '../utils/common';
 
 const securityRouter = express.Router();
 
 securityRouter.post('/login', async (req: Request, res: Response) => {
     const requestSchema = z.object({
-        username: z.string(),
+        name: z.string(),
         password: z.string()
     });
 
@@ -21,31 +21,26 @@ securityRouter.post('/login', async (req: Request, res: Response) => {
         return res.status(406).json({ error: result.error });
     }
 
-    const { username, password } = result.data;
+    const { name, password } = result.data;
 
-    userModel.connect(
-        username,
-        password,
-        DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss'),
-        (err: Error | null, user: User | null) => {
-            if (!user) {
-                return res
-                    .status(404)
-                    .json({ message: 'User not found', error: err });
-            }
-
-            if (err) {
-                return res
-                    .status(500)
-                    .json({ message: 'An error occured', error: err });
-            }
-
-            const payload = pick(user, ['id', 'created_at']);
-            const token = sign(payload, ENV.JWT_TOKEN, { expiresIn: '2h' });
-
-            res.status(200).json({ success: true, data: { token } });
+    const user = await prisma.user.findUnique({
+        where: {
+            name
         }
-    );
+    });
+
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (await comparePasswords(password, user.password)) {
+        const payload = pick(user, ['id', 'created_at']);
+        const token = sign(payload, ENV.JWT_TOKEN, { expiresIn: '2h' });
+
+        return res.status(200).json({ success: true, data: { token } });
+    }
+
+    return res.status(401).json({ message: 'Invalid credentials' });
 });
 
 securityRouter.post(
@@ -63,15 +58,50 @@ securityRouter.get(
     '/me',
     AuthMiddleware,
     async (request: Request, response: Response) => {
-        const authData: { id: number; createdAt: string } =
-            request.app.get('auth');
+        const authData: { id: number; createdAt: string } = request.app.get('auth');
 
-        userModel.findOne(authData.id, (error: null, user: User) => {
-            response
-                .status(200)
-                .json({ success: true, data: omit(user, ['password']) });
+        const user = await prisma.user.findUnique({
+            where: {
+                id: authData.id
+            }
         });
+
+        if (!user) {
+            return response.status(404).json({ message: 'User not found' });
+        }
+
+        return response
+            .status(200)
+            .json({ success: true, data: omit(user, ['password']) });
     }
 );
+
+securityRouter.patch('/me', AuthMiddleware, async (req: Request, res: Response) => {
+    const bodySchema = z.object({
+        name: z.string().min(3).max(20),
+        language: z.enum(Languages).default(DefaultLang)
+    });
+
+    const result = bodySchema.safeParse(req.body);
+    if (!result.success) {
+        return res.status(406).send({ success: false, error: result.error });
+    }
+
+    const updatedUser = await prisma.user.update({
+        where: {
+            id: req.app.get('auth').id
+        },
+        data: {
+            name: result.data.name,
+            updated_at: DateTime.now().toISO(),
+            language: result.data.language
+        }
+    });
+
+    return res.status(200).json({
+        success: true,
+        user: omit(updatedUser, ['password']),
+    });
+});
 
 export default securityRouter;
