@@ -33,7 +33,7 @@ export const CONTINENTS: Continent[] = [
         ]
     },
     {
-        name: { en: 'Africa', es: 'África', fr: "L'Afrique", it: 'Africa' },
+        name: { en: 'Africa', es: 'África', fr: "Afrique", it: 'Africa' },
         regions: [
             {
                 en: 'Northern Africa',
