@@ -1,14 +1,14 @@
-import { PrismaClient } from '@prisma/client';
 import express, { Request, Response } from 'express';
 import { sign } from 'jsonwebtoken';
+import { DateTime } from 'luxon';
 import { omit, pick } from 'radash';
 import { z } from 'zod';
 import { ENV } from '../env';
+import prisma from '../prisma';
 import { AuthMiddleware } from '../utils/authMiddlewares';
-import { comparePasswords } from '../utils/common';
+import { DefaultLang, Languages, comparePasswords } from '../utils/common';
 
 const securityRouter = express.Router();
-const prisma = new PrismaClient();
 
 securityRouter.post('/login', async (req: Request, res: Response) => {
     const requestSchema = z.object({
@@ -58,8 +58,7 @@ securityRouter.get(
     '/me',
     AuthMiddleware,
     async (request: Request, response: Response) => {
-        const authData: { id: number; createdAt: string } =
-            request.app.get('auth');
+        const authData: { id: number; createdAt: string } = request.app.get('auth');
 
         const user = await prisma.user.findUnique({
             where: {
@@ -76,5 +75,33 @@ securityRouter.get(
             .json({ success: true, data: omit(user, ['password']) });
     }
 );
+
+securityRouter.patch('/me', AuthMiddleware, async (req: Request, res: Response) => {
+    const bodySchema = z.object({
+        name: z.string().min(3).max(20),
+        language: z.enum(Languages).default(DefaultLang)
+    });
+
+    const result = bodySchema.safeParse(req.body);
+    if (!result.success) {
+        return res.status(406).send({ success: false, error: result.error });
+    }
+
+    const updatedUser = await prisma.user.update({
+        where: {
+            id: req.app.get('auth').id
+        },
+        data: {
+            name: result.data.name,
+            updated_at: DateTime.now().toISO(),
+            language: result.data.language
+        }
+    });
+
+    return res.status(200).json({
+        success: true,
+        user: omit(updatedUser, ['password']),
+    });
+});
 
 export default securityRouter;

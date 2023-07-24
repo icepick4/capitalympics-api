@@ -1,17 +1,39 @@
-import { PrismaClient } from '@prisma/client';
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
-import { DefaultLang, Languages, LearningTypes, Scores } from '../utils/common';
+import prisma from '../prisma';
+import { LearningTypes, Scores } from '../utils/common';
+import { getPlayableCountryId, getScores } from '../utils/scores';
 
-const prisma = new PrismaClient();
 const questionRouter = express.Router();
+
+async function getUnplayedCountries(
+    playedCountries: number[],
+    continent?: number
+): Promise<number[]> {
+    const wheres = [
+        playedCountries.length > 0 ? `c.id NOT IN (${playedCountries.join(',')})` : undefined,
+        continent ? `r.continent_id = ${continent}` : undefined,
+    ].filter((w) => w !== undefined);;
+
+    const joins = [continent ? `LEFT JOIN Region AS r ON c.region_id = r.id` : undefined]
+        .filter((j) => j !== undefined);
+
+    const query = `
+        SELECT c.id
+        FROM Country AS c
+        ${joins.join(' ')}
+        WHERE ${wheres.length ? wheres.join(' AND ') : '1'}
+    `;
+
+    const results: { id: number }[] = await prisma.$queryRawUnsafe(query);
+
+    return results.map((r) => Number(r.id));
+}
 
 questionRouter.get('/next', async (req: Request, res: Response) => {
     const querySchema = z.object({
-        lang: z.enum(Languages).default(DefaultLang),
         continent: z
             .preprocess(Number, z.number().nonnegative())
-            .default(-1)
             .optional(),
         type: z.enum(LearningTypes)
     });
@@ -21,7 +43,29 @@ questionRouter.get('/next', async (req: Request, res: Response) => {
         return res.status(406).json({ success: false, error: result.error });
     }
 
-    const { lang, continent, type } = result.data;
+    const userScores = await getScores(
+        req.app.get('auth').id,
+        result.data.type,
+        result.data.continent
+    );
+
+    const countriesAlreadyPlayed = userScores.map((s) => s.country_id);
+    const countriesNeverPlayed = await getUnplayedCountries(
+        countriesAlreadyPlayed,
+        result.data.continent
+    );
+
+    const country = getPlayableCountryId([
+        ...userScores,
+        ...countriesNeverPlayed.map((country_id) => ({
+            user_id: req.app.get('auth').id,
+            country_id,
+            learning_type: result.data.type,
+            score: 0,
+        }))
+    ]);
+
+    res.status(200).json({ success: true, country });
 });
 
 questionRouter.post('', async (req: Request, res: Response) => {

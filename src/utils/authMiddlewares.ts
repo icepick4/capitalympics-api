@@ -104,7 +104,7 @@ export function AuthMiddleware(
     }
 }
 
-export const corsMiddleware = (
+export const CORSMiddleware = (
     req: Request,
     res: Response,
     next: NextFunction

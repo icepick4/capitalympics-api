@@ -3,9 +3,9 @@ import { z } from 'zod';
 import prisma from '../prisma';
 import { DefaultLang, Languages, t } from '../utils/common';
 
-const continentRouter = express.Router();
+const regionRouter = express.Router();
 
-continentRouter.get('/', async (req: Request, res: Response) => {
+regionRouter.get('/', async (req: Request, res: Response) => {
     const QuerySchema = z.object({
         lang: z.enum(Languages).default(DefaultLang)
     });
@@ -13,13 +13,13 @@ continentRouter.get('/', async (req: Request, res: Response) => {
     const result = QuerySchema.safeParse(req.query);
     const lang = result.success ? result.data.lang : DefaultLang;
 
-    const continentsFromDB = await prisma.continent.findMany();
-    const continents = continentsFromDB.map((continent) => ({
-        ...continent,
-        name: t(continent.name, lang)
+    const regionsFromDB = await prisma.region.findMany();
+    const regions = regionsFromDB.map((region) => ({
+        ...region,
+        name: t(region.name, lang)
     }));
 
-    res.status(200).json({ success: true, continents });
+    res.status(200).json({ success: true, regions });
 });
 
-export default continentRouter;
+export default regionRouter;
