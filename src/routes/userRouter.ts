@@ -1,14 +1,7 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma';
-import { AuthMiddleware } from '../utils/authMiddlewares';
-import {
-    DefaultLang,
-    Languages,
-    LearningTypes,
-    hashPassword
-} from '../utils/common';
-import { getScores } from '../utils/scores';
+import { DefaultLang, Languages, hashPassword } from '../utils/common';
 
 const userRouter = express.Router();
 
@@ -16,35 +9,6 @@ userRouter.get('/', async (req: Request, res: Response) => {
     const count = await prisma.user.count();
     res.status(200).json({ success: true, count });
 });
-
-userRouter.get(
-    '/scores',
-    AuthMiddleware,
-    async (req: Request, res: Response) => {
-        const querySchema = z.object({
-            type: z.enum(LearningTypes),
-            continent: z
-                .preprocess(Number, z.number().nonnegative())
-                .default(-1)
-                .optional(),
-        });
-
-        const result = querySchema.safeParse(req.query);
-        if (!result.success) {
-            return res
-                .status(406)
-                .json({ success: false, error: result.error });
-        }
-
-        const scores = await getScores(
-            req.app.get('auth'),
-            result.data.type,
-            result.data.continent
-        );
-
-        res.status(200).json({ success: true, scores });
-    }
-);
 
 userRouter.post('/', async (req: Request, res: Response) => {
     const bodySchema = z.object({
@@ -62,6 +26,18 @@ userRouter.post('/', async (req: Request, res: Response) => {
 
     const { user } = result.data;
     const passwordHash = await hashPassword(user.password);
+
+    const existingUser = await prisma.user.findUnique({
+        where: {
+            name: user.name
+        }
+    });
+    if (existingUser) {
+        return res.status(409).json({
+            success: false,
+            error: 'User already exists'
+        });
+    }
 
     const newUser = await prisma.user.create({
         data: {

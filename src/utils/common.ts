@@ -1,8 +1,10 @@
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
-export function hashPassword(password: string, saltRounds: number = 10): Promise<string>
-{
+export function hashPassword(
+    password: string,
+    saltRounds: number = 10
+): Promise<string> {
     return bcrypt.hash(password, saltRounds);
 }
 

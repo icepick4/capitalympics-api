@@ -14,19 +14,29 @@ const countryRouter = express.Router();
 
 countryRouter.get('/', async (req: Request, res: Response) => {
     const QuerySchema = z.object({
-        lang: z.enum(Languages).default(DefaultLang)
+        lang: z.enum(Languages).default(DefaultLang),
+        max: z.preprocess(Number, z.number().nonnegative()).optional()
     });
 
     const result = QuerySchema.safeParse(req.query);
-    const lang = result.success ? result.data.lang : DefaultLang;
+
+    if (!result.success) {
+        return res.status(406).send(result.error);
+    }
+
+    const { lang, max } = result.data;
 
     const countriesFromDB = await prisma.country.findMany();
     const countries = countriesFromDB.map((country) => ({
         ...country,
         name: t(country.name, lang),
         capital: t(country.capital, lang),
-        official_name: t(country.official_name, lang),
+        official_name: t(country.official_name, lang)
     }));
+
+    if (max) {
+        countries.splice(max);
+    }
 
     res.status(200).json({ success: true, countries });
 });

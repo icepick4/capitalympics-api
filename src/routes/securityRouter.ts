@@ -58,7 +58,8 @@ securityRouter.get(
     '/me',
     AuthMiddleware,
     async (request: Request, response: Response) => {
-        const authData: { id: number; createdAt: string } = request.app.get('auth');
+        const authData: { id: number; createdAt: string } =
+            request.app.get('auth');
 
         const user = await prisma.user.findUnique({
             where: {
@@ -76,32 +77,61 @@ securityRouter.get(
     }
 );
 
-securityRouter.patch('/me', AuthMiddleware, async (req: Request, res: Response) => {
-    const bodySchema = z.object({
-        name: z.string().min(3).max(20),
-        language: z.enum(Languages).default(DefaultLang)
-    });
+securityRouter.delete(
+    '/me',
+    AuthMiddleware,
+    async (request: Request, response: Response) => {
+        const authData: { id: number; createdAt: string } =
+            request.app.get('auth');
 
-    const result = bodySchema.safeParse(req.body);
-    if (!result.success) {
-        return res.status(406).send({ success: false, error: result.error });
+        await prisma.user.delete({
+            where: {
+                id: authData.id
+            }
+        });
+
+        await prisma.questionResult.deleteMany({
+            where: {
+                user_id: authData.id
+            }
+        });
+
+        return response.status(200).json({ success: true });
     }
+);
 
-    const updatedUser = await prisma.user.update({
-        where: {
-            id: req.app.get('auth').id
-        },
-        data: {
-            name: result.data.name,
-            updated_at: DateTime.now().toISO(),
-            language: result.data.language
+securityRouter.patch(
+    '/me',
+    AuthMiddleware,
+    async (req: Request, res: Response) => {
+        const bodySchema = z.object({
+            name: z.string().min(3).max(20),
+            language: z.enum(Languages).default(DefaultLang)
+        });
+
+        const result = bodySchema.safeParse(req.body);
+        if (!result.success) {
+            return res
+                .status(406)
+                .send({ success: false, error: result.error });
         }
-    });
 
-    return res.status(200).json({
-        success: true,
-        user: omit(updatedUser, ['password']),
-    });
-});
+        const updatedUser = await prisma.user.update({
+            where: {
+                id: req.app.get('auth').id
+            },
+            data: {
+                name: result.data.name,
+                updated_at: DateTime.now().toISO(),
+                language: result.data.language
+            }
+        });
+
+        return res.status(200).json({
+            success: true,
+            user: omit(updatedUser, ['password'])
+        });
+    }
+);
 
 export default securityRouter;

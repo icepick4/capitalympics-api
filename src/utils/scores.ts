@@ -1,6 +1,6 @@
-import { objectify } from "radash";
-import prisma from "../prisma";
-import { LearningType } from "./common";
+import { objectify } from 'radash';
+import prisma from '../prisma';
+import { LearningType } from './common';
 
 interface UserScore {
     user_id: number;
@@ -24,7 +24,10 @@ export function calculateScore(
     failed_count: number
 ): number {
     let score: number = 0;
-    const total = succeeded_count + medium_count + failed_count;
+    const total: number =
+        parseInt(succeeded_count.toString()) +
+        parseInt(medium_count.toString()) +
+        parseInt(failed_count.toString());
 
     if (total === 0) {
         return -1;
@@ -52,13 +55,11 @@ export function calculateScore(
             Math.log10(succeeded_count + 1)) /
             1.5
     );
-
     // Score between 0 and 100
     return Math.floor(Math.max(0, Math.min(score, 100)));
-};
+}
 
-export async function getOverallScores(userId: number)
-{
+export async function getOverallScores(userId: number) {
     const query = `
         SELECT
             learning_type,
@@ -70,16 +71,28 @@ export async function getOverallScores(userId: number)
         GROUP BY learning_type;
     `;
 
-    const results = (await prisma.$queryRawUnsafe(query)) as Omit<UserScoreFromDB, 'country_id' | 'user_id'>[];
-    const { capital, flag } = objectify(results, (result) => result.learning_type);
+    const results = (await prisma.$queryRawUnsafe(query)) as Omit<
+        UserScoreFromDB,
+        'country_id' | 'user_id'
+    >[];
+    const { capital, flag } = objectify(
+        results,
+        (result) => result.learning_type
+    );
 
     return {
-        capital: capital !== undefined
-            ? calculateScore(capital.succeeded, capital.medium, capital.failed)
-            : -1,
-        flag: flag !== undefined
-            ? calculateScore(flag.succeeded, flag.medium, flag.failed)
-            : -1,
+        capital:
+            capital !== undefined
+                ? calculateScore(
+                      capital.succeeded,
+                      capital.medium,
+                      capital.failed
+                  )
+                : -1,
+        flag:
+            flag !== undefined
+                ? calculateScore(flag.succeeded, flag.medium, flag.failed)
+                : -1
     };
 }
 
@@ -114,7 +127,7 @@ export async function getScores(
         learning_type: learningType,
         score: calculateScore(s.succeeded, s.medium, s.failed)
     }));
-};
+}
 
 export function getPlayableCountryId(scores: UserScore[]): number {
     scores.sort((a, b) => b.score - a.score);
