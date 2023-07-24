@@ -116,6 +116,21 @@ securityRouter.patch(
                 .send({ success: false, error: result.error });
         }
 
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                name: result.data.name,
+                id: {
+                    not: req.app.get('auth').id
+                }
+            }
+        });
+        if (existingUser) {
+            return res.status(409).json({
+                success: false,
+                error: 'User already exists'
+            });
+        }
+
         const updatedUser = await prisma.user.update({
             where: {
                 id: req.app.get('auth').id
