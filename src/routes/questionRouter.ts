@@ -2,7 +2,11 @@ import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma';
 import { LearningTypes, Scores } from '../utils/common';
-import { getPlayableCountryId, getScores } from '../utils/scores';
+import {
+    calculateScore,
+    getPlayableCountryId,
+    getUserResultsCounters
+} from '../utils/scores';
 
 const questionRouter = express.Router();
 
@@ -44,7 +48,7 @@ questionRouter.get('/next', async (req: Request, res: Response) => {
         return res.status(406).json({ success: false, error: result.error });
     }
 
-    const userScores = await getScores(
+    const userScores = await getUserResultsCounters(
         req.app.get('auth').id,
         result.data.type,
         result.data.continent
@@ -62,7 +66,9 @@ questionRouter.get('/next', async (req: Request, res: Response) => {
             user_id: req.app.get('auth').id,
             country_id,
             learning_type: result.data.type,
-            score: 0
+            succeeded: 0,
+            medium: 0,
+            failed: 0
         }))
     ]);
 
@@ -81,39 +87,59 @@ questionRouter.post('', async (req: Request, res: Response) => {
         return res.status(406).json({ success: false, error: result.error });
     }
 
-    const { type, country_id: countryId } = result.data;
+    const { type, country_id: countryId, result: questionResult } = result.data;
     const userId = parseInt(req.app.get('auth').id);
 
-    const [previousScore, currentScore] = await Promise.all([
-        getScores(userId, type, undefined, countryId),
-        prisma.questionResult
-            .create({
-                data: {
-                    user_id: userId,
-                    country_id: countryId,
-                    learning_type: type,
-                    result: result.data.result
-                }
-            })
-            .then(() => getScores(userId, type, undefined, countryId))
-    ]);
+    const oldCounters = await getUserResultsCounters(
+        userId,
+        type,
+        undefined,
+        countryId
+    );
 
-    if (previousScore.length === 0) {
+    await prisma.questionResult.create({
+        data: {
+            user_id: userId,
+            country_id: countryId,
+            learning_type: type,
+            result: questionResult
+        }
+    });
+
+    if (oldCounters.length === 0) {
         return res.status(200).json({ success: true });
     }
 
-    const previousTens = Math.floor(previousScore[0].score / 10);
-    const currentTens = Math.floor(currentScore[0].score / 10);
+    const oldScore = calculateScore(
+        oldCounters[0].succeeded,
+        oldCounters[0].medium,
+        oldCounters[0].failed
+    );
+
+    const currentScore = calculateScore(
+        questionResult === 'succeeded'
+            ? oldCounters[0].succeeded + 1
+            : oldCounters[0].succeeded,
+        questionResult === 'medium'
+            ? oldCounters[0].medium + 1
+            : oldCounters[0].medium,
+        questionResult === 'failed'
+            ? oldCounters[0].failed + 1
+            : oldCounters[0].failed
+    );
+
+    const previousTens = Math.floor(oldScore / 10);
+    const currentTens = Math.floor(currentScore / 10);
 
     if (previousTens < currentTens) {
         return res
             .status(200)
-            .json({ success: true, level: 'up', score: currentScore[0].score });
+            .json({ success: true, level: 'up', score: currentScore });
     } else if (previousTens > currentTens) {
         return res.status(200).json({
             success: true,
             level: 'down',
-            score: currentScore[0].score
+            score: currentScore
         });
     }
     return res.status(200).json({ success: true });

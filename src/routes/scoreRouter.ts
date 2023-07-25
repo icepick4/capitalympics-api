@@ -1,7 +1,11 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import { LearningTypes } from '../utils/common';
-import { getOverallScores, getScores } from '../utils/scores';
+import {
+    calculateScore,
+    getOverallScores,
+    getUserResultsCounters
+} from '../utils/scores';
 
 const scoreRouter = express.Router();
 
@@ -16,10 +20,14 @@ scoreRouter.get('', async (req: Request, res: Response) => {
         return res.status(406).json({ success: false, error: result.error });
     }
 
-    const scores = await getScores(
+    const scores = await getUserResultsCounters(
         req.app.get('auth').id,
         result.data.type,
         result.data.continent
+    );
+
+    scores.map(
+        (s) => (s.score = calculateScore(s.succeeded, s.medium, s.failed))
     );
 
     res.status(200).json({ success: true, scores });
@@ -28,7 +36,7 @@ scoreRouter.get('', async (req: Request, res: Response) => {
 scoreRouter.get('/overall', async (req: Request, res: Response) => {
     res.status(200).json({
         success: true,
-        scores: await getOverallScores(req.app.get('auth').id),
+        scores: await getOverallScores(req.app.get('auth').id)
     });
 });
 

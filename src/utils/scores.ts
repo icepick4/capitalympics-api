@@ -6,7 +6,10 @@ interface UserScore {
     user_id: number;
     country_id: number;
     learning_type: LearningType;
-    score: number;
+    succeeded: number;
+    medium: number;
+    failed: number;
+    score?: number;
 }
 
 interface UserScoreFromDB {
@@ -95,7 +98,7 @@ export async function getOverallScores(userId: number) {
     };
 }
 
-export async function getScores(
+export async function getUserResultsCounters(
     userId: number,
     learningType: LearningType,
     continentId?: number,
@@ -129,12 +132,23 @@ export async function getScores(
         user_id: userId,
         country_id: Number(s.country_id),
         learning_type: learningType,
-        score: calculateScore(s.succeeded, s.medium, s.failed)
+        succeeded: Number(s.succeeded),
+        medium: Number(s.medium),
+        failed: Number(s.failed)
     }));
 }
 
 export function getPlayableCountryId(scores: UserScore[]): number {
-    scores.sort((a, b) => b.score - a.score);
+    scores.map(
+        (s) => (s.score = calculateScore(s.succeeded, s.medium, s.failed))
+    );
+
+    scores.sort((a, b) => {
+        if (a.score === undefined || b.score === undefined) {
+            return 0;
+        }
+        return a.score - b.score;
+    });
     const lowPartWeight = 0.8;
     const half = Math.ceil(scores.length / 2);
     const firstHalf = scores.slice(0, half);
