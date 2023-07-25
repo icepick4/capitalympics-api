@@ -28,7 +28,6 @@ export function calculateScore(
         parseInt(succeeded_count.toString()) +
         parseInt(medium_count.toString()) +
         parseInt(failed_count.toString());
-
     if (total === 0) {
         return -1;
     }
@@ -52,7 +51,7 @@ export function calculateScore(
         ((weighted_succeeded_percentage * 100 -
             weighted_medium_percentage * 10 -
             weighted_failed_percentage * 25) *
-            Math.log10(succeeded_count + 1)) /
+            Math.log10(parseInt(succeeded_count.toString()) + 1)) /
             1.5
     );
     // Score between 0 and 100
@@ -99,7 +98,8 @@ export async function getOverallScores(userId: number) {
 export async function getScores(
     userId: number,
     learningType: LearningType,
-    continentId?: number
+    continentId?: number,
+    countryId?: number
 ): Promise<UserScore[]> {
     const joins = [];
     const wheres = [
@@ -113,6 +113,10 @@ export async function getScores(
             `LEFT JOIN Region AS r ON c.region_id = r.id`
         );
         wheres.push(`r.continent_id = ${continentId}`);
+    }
+
+    if (countryId) {
+        wheres.push(`s.country_id = ${countryId}`);
     }
 
     const sqlJoins = joins.join(' ');

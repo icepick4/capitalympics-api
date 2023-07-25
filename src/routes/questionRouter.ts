@@ -11,12 +11,15 @@ async function getUnplayedCountries(
     continent?: number
 ): Promise<number[]> {
     const wheres = [
-        playedCountries.length > 0 ? `c.id NOT IN (${playedCountries.join(',')})` : undefined,
-        continent ? `r.continent_id = ${continent}` : undefined,
-    ].filter((w) => w !== undefined);;
+        playedCountries.length > 0
+            ? `c.id NOT IN (${playedCountries.join(',')})`
+            : undefined,
+        continent ? `r.continent_id = ${continent}` : undefined
+    ].filter((w) => w !== undefined);
 
-    const joins = [continent ? `LEFT JOIN Region AS r ON c.region_id = r.id` : undefined]
-        .filter((j) => j !== undefined);
+    const joins = [
+        continent ? `LEFT JOIN Region AS r ON c.region_id = r.id` : undefined
+    ].filter((j) => j !== undefined);
 
     const query = `
         SELECT c.id
@@ -32,9 +35,7 @@ async function getUnplayedCountries(
 
 questionRouter.get('/next', async (req: Request, res: Response) => {
     const querySchema = z.object({
-        continent: z
-            .preprocess(Number, z.number().nonnegative())
-            .optional(),
+        continent: z.preprocess(Number, z.number().nonnegative()).optional(),
         type: z.enum(LearningTypes)
     });
 
@@ -61,7 +62,7 @@ questionRouter.get('/next', async (req: Request, res: Response) => {
             user_id: req.app.get('auth').id,
             country_id,
             learning_type: result.data.type,
-            score: 0,
+            score: 0
         }))
     ]);
 
@@ -80,15 +81,41 @@ questionRouter.post('', async (req: Request, res: Response) => {
         return res.status(406).json({ success: false, error: result.error });
     }
 
-    await prisma.questionResult.create({
-        data: {
-            user_id: parseInt(req.app.get('auth').id),
-            country_id: result.data.country_id,
-            learning_type: result.data.type,
-            result: result.data.result
-        }
-    });
+    const { type, country_id: countryId } = result.data;
+    const userId = parseInt(req.app.get('auth').id);
 
+    const [previousScore, currentScore] = await Promise.all([
+        getScores(userId, type, undefined, countryId),
+        prisma.questionResult
+            .create({
+                data: {
+                    user_id: userId,
+                    country_id: countryId,
+                    learning_type: type,
+                    result: result.data.result
+                }
+            })
+            .then(() => getScores(userId, type, undefined, countryId))
+    ]);
+
+    if (previousScore.length === 0) {
+        return res.status(200).json({ success: true });
+    }
+
+    const previousTens = Math.floor(previousScore[0].score / 10);
+    const currentTens = Math.floor(currentScore[0].score / 10);
+
+    if (previousTens < currentTens) {
+        return res
+            .status(200)
+            .json({ success: true, level: 'up', score: currentScore[0].score });
+    } else if (previousTens > currentTens) {
+        return res.status(200).json({
+            success: true,
+            level: 'down',
+            score: currentScore[0].score
+        });
+    }
     return res.status(200).json({ success: true });
 });
 
