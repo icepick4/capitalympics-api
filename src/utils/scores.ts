@@ -6,7 +6,10 @@ interface UserScore {
     user_id: number;
     country_id: number;
     learning_type: LearningType;
-    score: number;
+    succeeded: number;
+    medium: number;
+    failed: number;
+    score?: number;
 }
 
 interface UserScoreFromDB {
@@ -28,7 +31,6 @@ export function calculateScore(
         parseInt(succeeded_count.toString()) +
         parseInt(medium_count.toString()) +
         parseInt(failed_count.toString());
-
     if (total === 0) {
         return -1;
     }
@@ -52,7 +54,7 @@ export function calculateScore(
         ((weighted_succeeded_percentage * 100 -
             weighted_medium_percentage * 10 -
             weighted_failed_percentage * 25) *
-            Math.log10(succeeded_count + 1)) /
+            Math.log10(parseInt(succeeded_count.toString()) + 1)) /
             1.5
     );
     // Score between 0 and 100
@@ -96,10 +98,11 @@ export async function getOverallScores(userId: number) {
     };
 }
 
-export async function getScores(
+export async function getUserResultsCounters(
     userId: number,
     learningType: LearningType,
-    continentId?: number
+    continentId?: number,
+    countryId?: number
 ): Promise<UserScore[]> {
     const joins = [];
     const wheres = [
@@ -115,6 +118,10 @@ export async function getScores(
         wheres.push(`r.continent_id = ${continentId}`);
     }
 
+    if (countryId) {
+        wheres.push(`s.country_id = ${countryId}`);
+    }
+
     const sqlJoins = joins.join(' ');
     const sqlWheres = wheres.join(' AND ');
 
@@ -125,12 +132,23 @@ export async function getScores(
         user_id: userId,
         country_id: Number(s.country_id),
         learning_type: learningType,
-        score: calculateScore(s.succeeded, s.medium, s.failed)
+        succeeded: Number(s.succeeded),
+        medium: Number(s.medium),
+        failed: Number(s.failed)
     }));
 }
 
 export function getPlayableCountryId(scores: UserScore[]): number {
-    scores.sort((a, b) => b.score - a.score);
+    scores.map(
+        (s) => (s.score = calculateScore(s.succeeded, s.medium, s.failed))
+    );
+
+    scores.sort((a, b) => {
+        if (a.score === undefined || b.score === undefined) {
+            return 0;
+        }
+        return a.score - b.score;
+    });
     const lowPartWeight = 0.8;
     const half = Math.ceil(scores.length / 2);
     const firstHalf = scores.slice(0, half);
