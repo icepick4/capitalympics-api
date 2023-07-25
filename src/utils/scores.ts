@@ -53,7 +53,7 @@ export function calculateScore(
             weighted_medium_percentage * 10 -
             weighted_failed_percentage * 25) *
             Math.log10(succeeded_count + 1)) /
-            1.5
+            1.625
     );
     // Score between 0 and 100
     return Math.floor(Math.max(0, Math.min(score, 100)));
