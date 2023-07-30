@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { sign } from 'jsonwebtoken';
+import { JsonWebTokenError, JwtPayload, TokenExpiredError, sign, verify } from 'jsonwebtoken';
 import { DateTime } from 'luxon';
 import { omit, pick } from 'radash';
 import { z } from 'zod';
@@ -45,12 +45,47 @@ securityRouter.post('/login', async (req: Request, res: Response) => {
 
 securityRouter.post(
     '/refresh-token',
-    AuthMiddleware,
-    async (req: Request, res: Response) => {
-        const payload: { id: number; createdAt: string } = req.app.get('auth');
-        const token = sign(payload, ENV.JWT_TOKEN, { expiresIn: '2h' });
+    async (request: Request, response: Response) => {
+        const HEADER_NAME = 'authorization';
+        const headersSchema = z.object({
+            [HEADER_NAME]: z.string().startsWith('Bearer ').nonempty()
+        });
+        const result = headersSchema.safeParse(request.headers);
+        if (!result.success) {
+            return response.status(401).json({
+                success: false,
+                error: {
+                    code: 'access_token_missing',
+                    message: `This route requires a non-empty '${HEADER_NAME}' header`
+                }
+            });
+        }
 
-        res.status(200).json({ success: true, data: { token } });
+        const tokenFromHeader = result.data[HEADER_NAME].split(' ')[1];
+
+        try {
+            const payload = verify(tokenFromHeader, ENV.JWT_TOKEN) as JwtPayload;
+            delete payload.iat;
+            delete payload.exp;
+            delete payload.nbf;
+            delete payload.jti;
+
+            const token = sign(payload, ENV.JWT_TOKEN, { expiresIn: '2h' });
+            request.app.set('auth', payload);
+
+            return response.status(200).json({ success: true, data: { token } });;
+        } catch (err) {
+            const error = err as JsonWebTokenError | TokenExpiredError;
+            const code =
+                error.name === 'TokenExpiredError'
+                    ? 'access_token_expired'
+                    : 'invalid_token';
+            const message = 'This route requires a valid access token';
+
+            return response
+                .status(401)
+                .json({ success: false, error: { code, message } });
+        }
     }
 );
 
