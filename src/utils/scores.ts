@@ -1,4 +1,3 @@
-import { objectify } from 'radash';
 import prisma from '../prisma';
 import { LearningType } from './common';
 
@@ -62,39 +61,26 @@ export function calculateScore(
 }
 
 export async function getOverallScores(userId: number) {
-    const query = `
-        SELECT
-            learning_type,
-            SUM(CASE WHEN result = 'succeeded' THEN 1 ELSE 0 END) AS succeeded,
-            SUM(CASE WHEN result = 'medium' THEN 1 ELSE	0 END) AS medium,
-            SUM(CASE WHEN result = 'failed' THEN 1 ELSE 0 END) AS failed
-        FROM QuestionResult
-        WHERE user_id = ${userId}
-        GROUP BY learning_type;
-    `;
+    const flagScores = await getUserResultsCounters(userId, 'flag');
+    const capitalScores = await getUserResultsCounters(userId, 'capital');
 
-    const results = (await prisma.$queryRawUnsafe(query)) as Omit<
-        UserScoreFromDB,
-        'country_id' | 'user_id'
-    >[];
-    const { capital, flag } = objectify(
-        results,
-        (result) => result.learning_type
+    flagScores.map(
+        (s) => (s.score = calculateScore(s.succeeded, s.medium, s.failed))
     );
 
+    const flagAvg =
+        flagScores.reduce((acc, s) => acc + s.score!, 0) / flagScores.length;
+
+    capitalScores.map(
+        (s) => (s.score = calculateScore(s.succeeded, s.medium, s.failed))
+    );
+
+    const capitalAvg =
+        capitalScores.reduce((acc, s) => acc + s.score!, 0) /
+        capitalScores.length;
     return {
-        capital:
-            capital !== undefined
-                ? calculateScore(
-                      capital.succeeded,
-                      capital.medium,
-                      capital.failed
-                  )
-                : -1,
-        flag:
-            flag !== undefined
-                ? calculateScore(flag.succeeded, flag.medium, flag.failed)
-                : -1
+        capital: capitalAvg,
+        flag: flagAvg
     };
 }
 
