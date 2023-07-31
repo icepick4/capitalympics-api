@@ -11,8 +11,7 @@ const envVariablesSchema = z.object({
         .refine((value) => !isNaN(value) && value > 0, {
             message: 'The PORT environment variable must be a positive number'
         })
-        .optional(),
-    SSL_REJECT_UNAUTHORIZED: z.string().optional().default('1')
+        .optional()
 });
 
 export const ENV = envVariablesSchema.parse(process.env);
