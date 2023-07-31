@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
+import prisma from '../prisma';
 import { LearningTypes } from '../utils/common';
 import {
     calculateScore,
@@ -38,6 +39,18 @@ scoreRouter.get('/overall', async (req: Request, res: Response) => {
         success: true,
         scores: await getOverallScores(req.app.get('auth').id)
     });
+});
+
+scoreRouter.post('/reset', async (req: Request, res: Response) => {
+    const { id } = req.app.get('auth');
+
+    await prisma.questionResult.deleteMany({
+        where: {
+            user_id: parseInt(id)
+        }
+    });
+
+    res.status(200).json({ success: true });
 });
 
 export default scoreRouter;

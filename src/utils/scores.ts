@@ -78,6 +78,7 @@ export async function getOverallScores(userId: number) {
     const capitalAvg =
         capitalScores.reduce((acc, s) => acc + s.score!, 0) /
         capitalScores.length;
+
     return {
         capital: capitalAvg,
         flag: flagAvg
