@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { ENV } from '../env';
 
 export const tokenMiddleware = (
-    req: Request,
-    res: Response,
+    request: Request,
+    response: Response,
     next: NextFunction
 ) => {
     const HEADER_NAME = 'authorization';
@@ -18,10 +18,10 @@ export const tokenMiddleware = (
         id: z.number().nonnegative()
     });
 
-    const result = headersSchema.safeParse(req.headers);
+    const result = headersSchema.safeParse(request.headers);
 
     if (!result.success) {
-        return res.status(401).json({
+        return response.status(401).json({
             success: false,
             error: {
                 code: 'access_token_missing',
@@ -30,10 +30,10 @@ export const tokenMiddleware = (
         });
     }
 
-    const resultBody = bodySchema.safeParse(req.body);
+    const resultBody = bodySchema.safeParse(request.body);
 
     if (!resultBody.success) {
-        return res.status(401).json({
+        return response.status(401).json({
             success: false,
             error: {
                 code: 'user_id_missing',
@@ -46,20 +46,20 @@ export const tokenMiddleware = (
     const id = resultBody.data.id;
 
     if (!id) {
-        return res.status(401).send({ message: 'User ID missing' });
+        return response.status(401).send({ message: 'User ID missing' });
     }
     if (!token) {
-        return res.status(401).send({ message: 'Token missing' });
+        return response.status(401).send({ message: 'Token missing' });
     }
     try {
         const decoded = verify(token, ENV.JWT_TOKEN);
         if (typeof decoded === 'string' || decoded.id != id) {
-            return res.status(403).send({ message: 'Forbidden' });
+            return response.status(403).send({ message: 'Forbidden' });
         }
 
         next();
     } catch (err) {
-        return res.status(401).send({ message: 'Invalid token' });
+        return response.status(401).send({ message: 'Invalid token' });
     }
 };
 
@@ -101,6 +101,69 @@ export function AuthMiddleware(
         return response
             .status(401)
             .json({ success: false, error: { code, message } });
+    }
+}
+
+export function optionalAuthMiddleware(
+    req: Request,
+    res: Response,
+    next: NextFunction
+) {
+    const HEADER_NAME = 'authorization';
+    const headersSchema = z.object({
+        [HEADER_NAME]: z.string().startsWith('Bearer ').nonempty()
+    });
+
+    const bodySchema = z.object({
+        id: z.number().nonnegative()
+    });
+
+    const headerResult = headersSchema.safeParse(req.headers);
+    const bodyResult = bodySchema.safeParse(req.body);
+
+    if (headerResult.success && !bodyResult.success) {
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: 'user_id_missing',
+                message: `This route requires a non-empty 'id' body parameter`
+            }
+        });
+    }
+
+    if (
+        (!headerResult.success && !bodyResult.success) ||
+        (!headerResult.success && bodyResult.success)
+    ) {
+        req.app.set('auth', null);
+        return next();
+    }
+
+    if (headerResult.success && bodyResult.success) {
+        if (!headerResult.data[HEADER_NAME]) {
+            return res.status(401).send({ message: 'Token missing' });
+        }
+        const token = headerResult.data[HEADER_NAME].split(' ')[1];
+        const id = bodyResult.data.id;
+
+        if (!id) {
+            return res.status(401).send({ message: 'User ID missing' });
+        }
+        if (!token) {
+            return res.status(401).send({ message: 'Token missing' });
+        }
+        try {
+            const decoded = verify(token, ENV.JWT_TOKEN);
+            if (typeof decoded === 'string' || decoded.id != id) {
+                return res.status(403).send({ message: 'Forbidden' });
+            }
+
+            req.app.set('auth', decoded);
+
+            return next();
+        } catch (err) {
+            return res.status(401).send({ message: 'Invalid token' });
+        }
     }
 }
 
