@@ -105,8 +105,8 @@ export function AuthMiddleware(
 }
 
 export function optionalAuthMiddleware(
-    req: Request,
-    res: Response,
+    request: Request,
+    response: Response,
     next: NextFunction
 ) {
     const HEADER_NAME = 'authorization';
@@ -114,55 +114,32 @@ export function optionalAuthMiddleware(
         [HEADER_NAME]: z.string().startsWith('Bearer ').nonempty()
     });
 
-    const bodySchema = z.object({
-        id: z.number().nonnegative()
-    });
+    const headerResult = headersSchema.safeParse(request.headers);
 
-    const headerResult = headersSchema.safeParse(req.headers);
-    const bodyResult = bodySchema.safeParse(req.body);
-
-    if (headerResult.success && !bodyResult.success) {
-        return res.status(401).json({
-            success: false,
-            error: {
-                code: 'user_id_missing',
-                message: `This route requires a non-empty 'id' body parameter`
-            }
-        });
-    }
-
-    if (
-        (!headerResult.success && !bodyResult.success) ||
-        (!headerResult.success && bodyResult.success)
-    ) {
-        req.app.set('auth', null);
+    if (!headerResult.success) {
+        request.app.set('auth', null);
         return next();
     }
 
-    if (headerResult.success && bodyResult.success) {
-        if (!headerResult.data[HEADER_NAME]) {
-            return res.status(401).send({ message: 'Token missing' });
-        }
-        const token = headerResult.data[HEADER_NAME].split(' ')[1];
-        const id = bodyResult.data.id;
+    const token = headerResult.data[HEADER_NAME].split(' ')[1];
 
-        if (!id) {
-            return res.status(401).send({ message: 'User ID missing' });
-        }
-        if (!token) {
-            return res.status(401).send({ message: 'Token missing' });
-        }
+    if (headerResult.success) {
         try {
-            const decoded = verify(token, ENV.JWT_TOKEN);
-            if (typeof decoded === 'string' || decoded.id != id) {
-                return res.status(403).send({ message: 'Forbidden' });
-            }
-
-            req.app.set('auth', decoded);
+            const authData = verify(token, ENV.JWT_TOKEN);
+            request.app.set('auth', authData);
 
             return next();
         } catch (err) {
-            return res.status(401).send({ message: 'Invalid token' });
+            const error = err as JsonWebTokenError | TokenExpiredError;
+            const code =
+                error.name === 'TokenExpiredError'
+                    ? 'access_token_expired'
+                    : 'invalid_token';
+            const message = 'This route requires a valid access token';
+
+            return response
+                .status(401)
+                .json({ success: false, error: { code, message } });
         }
     }
 }

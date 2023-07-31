@@ -4,11 +4,11 @@
     "description": "api for capitalympics",
     "main": "index.js",
     "scripts": {
-        "build": "npx tsc",
+        "build": "npx prisma generate && tsc",
         "start": "node dist/src/index.js",
         "dev": "nodemon src/index.ts",
-        "prisma": "prisma generate",
-        "seed": "ts-node prisma/seed.ts"
+        "seed": "ts-node prisma/seed.ts",
+        "prisma:generate": "npx prisma generate"
     },
     "repository": {
         "type": "git",
