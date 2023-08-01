@@ -39,6 +39,7 @@ countryRouter.get('/', async (req: Request, res: Response) => {
     }));
 
     if (max) {
+        countries.sort(() => Math.random() - 0.5);
         countries.splice(max);
     }
 
