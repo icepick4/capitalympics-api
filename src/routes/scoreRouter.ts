@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma';
-import { LearningTypes } from '../utils/common';
+import { DefaultLang, Languages, LearningTypes } from '../utils/common';
 import {
     calculateScore,
     getOverallScores,
@@ -30,6 +30,36 @@ scoreRouter.get('', async (req: Request, res: Response) => {
     scores.map(
         (s) => (s.score = calculateScore(s.succeeded, s.medium, s.failed))
     );
+
+    res.status(200).json({ success: true, scores });
+});
+
+scoreRouter.get('/raw', async (req: Request, res: Response) => {
+    const bodySchema = z.object({
+        type: z.enum(LearningTypes).optional(),
+        lang: z.enum(Languages).default(DefaultLang)
+    });
+
+    const result = bodySchema.safeParse(req.body);
+    if (!result.success) {
+        return res.status(406).json({ success: false, error: result.error });
+    }
+
+    const scores = await prisma.questionResult.findMany({
+        where: {
+            user_id: parseInt(req.app.get('auth').id),
+            learning_type: result.data.type
+        },
+        orderBy: {
+            created_at: 'desc'
+        },
+        select: {
+            learning_type: true,
+            result: true,
+            created_at: true,
+            country_id: true
+        }
+    });
 
     res.status(200).json({ success: true, scores });
 });
