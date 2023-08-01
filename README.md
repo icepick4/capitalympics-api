@@ -139,6 +139,11 @@ enum Score {
   failed
 }
 ```
+
+Use prisma to initialize your database, migrations are available [here](/prisma/migrations).
+
+Then you can easily seed the database by running : `npm run seed`
+To fill raw data tables : countries, regions and continents.
   
 ## Run the api
 Either : 
