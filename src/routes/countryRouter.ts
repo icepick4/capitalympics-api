@@ -74,7 +74,7 @@ countryRouter.get(
         const { id } =
             req.app.get('auth') === null
                 ? { id: undefined }
-                : req.app.get('auth').id;
+                : req.app.get('auth');
 
         try {
             const country = await prisma.country.findUnique({

@@ -7,7 +7,7 @@ const envVariablesSchema = z.object({
     DB_USER: z.string(),
     DB_PWD: z.string(),
     DB_NAME: z.string(),
-    DATABASE_URL: z.string().optional(),
+    DATABASE_URL: z.string(),
     JWT_TOKEN: z.string().nonempty(),
     PORT: z
         .string()
