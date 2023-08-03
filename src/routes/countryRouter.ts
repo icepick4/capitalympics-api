@@ -39,6 +39,7 @@ countryRouter.get('/', async (req: Request, res: Response) => {
     }));
 
     if (max) {
+        countries.sort(() => Math.random() - 0.5);
         countries.splice(max);
     }
 
@@ -73,7 +74,7 @@ countryRouter.get(
         const { id } =
             req.app.get('auth') === null
                 ? { id: undefined }
-                : req.app.get('auth').id;
+                : req.app.get('auth');
 
         try {
             const country = await prisma.country.findUnique({
