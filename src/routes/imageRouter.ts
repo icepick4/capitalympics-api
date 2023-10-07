@@ -33,7 +33,6 @@ imageRouter.post(
 
 imageRouter.get('/:fileName', async (req: Request, res: Response) => {
     const { fileName } = req.params;
-    console.log('displaying image', fileName);
     res.sendFile(`${ENV.DOWNLOAD_FOLDER}/${fileName}`);
 });
 

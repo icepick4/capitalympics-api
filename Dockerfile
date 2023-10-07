@@ -30,6 +30,7 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
 
 RUN npm install pm2 -g
+RUN mkdir -p /app/images
 
 EXPOSE 3001
 
