@@ -9,6 +9,7 @@ const envVariablesSchema = z.object({
     DB_NAME: z.string(),
     DATABASE_URL: z.string(),
     JWT_TOKEN: z.string().nonempty(),
+    DOWNLOAD_FOLDER: z.string().nonempty(),
     PORT: z
         .string()
         .transform(Number)
