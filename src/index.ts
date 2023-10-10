@@ -10,6 +10,7 @@ import userRouter from './routes/userRouter';
 
 import imageRouter from './routes/imageRouter';
 import questionRouter from './routes/questionRouter';
+import quizRouter from './routes/quizRouter';
 import regionRouter from './routes/regionRouter';
 import scoreRouter from './routes/scoreRouter';
 import securityRouter from './routes/securityRouter';
@@ -28,6 +29,7 @@ app.use('/api/continents', continentRouter);
 app.use('/api/countries', countryRouter);
 app.use('/api/questions', AuthMiddleware, questionRouter);
 app.use('/api/images', imageRouter);
+app.use('/api/quiz', AuthMiddleware, quizRouter);
 app.use('/api/regions', regionRouter);
 app.use('/api/scores', AuthMiddleware, scoreRouter);
 app.use('/api/users', userRouter);

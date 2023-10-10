@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -11,7 +11,7 @@ datasource db {
 
 model User {
   id         Int       @id @default(autoincrement()) @db.UnsignedInt
-  name   String        @unique(map: "name") @db.VarChar(100)
+  name       String    @unique(map: "name") @db.VarChar(100)
   password   String    @db.VarChar(255)
   created_at DateTime  @default(now()) @db.Timestamp(0)
   updated_at DateTime? @default(now()) @db.DateTime(0)
@@ -37,6 +37,7 @@ model Country {
   countryCurrencies CountryCurrency[]
   region            Region            @relation(fields: [region_id], references: [id])
   QuestionResult    QuestionResult[]
+
   @@index([region_id], map: "idx_country_region_id")
 }
 
@@ -46,6 +47,7 @@ model CountryCurrency {
   currency_id Int      @db.UnsignedInt
   country     Country  @relation(fields: [country_id], references: [id])
   currency    Currency @relation(fields: [currency_id], references: [id])
+
   @@index([country_id], map: "idx_countrycurrency_country_id")
   @@index([currency_id], map: "idx_countrycurrency_currency_id")
 }
@@ -63,6 +65,7 @@ model Region {
   continent    Continent @relation(fields: [continent_id], references: [id])
   continent_id Int       @db.UnsignedInt
   Country      Country[]
+
   @@index([continent_id], map: "idx_region_continent_id")
 }
 
@@ -73,8 +76,58 @@ model QuestionResult {
   learning_type LearningType @default(capital)
   result        Score        @default(succeeded)
   created_at    DateTime     @default(now()) @db.Timestamp(0)
-  country      Country      @relation(fields: [country_id], references: [id])
+  country       Country      @relation(fields: [country_id], references: [id])
+
   @@index([country_id])
+}
+
+model QuizQuestion {
+  id         Int          @id @default(autoincrement()) @db.UnsignedInt
+  question   String       @db.VarChar(255)
+  Quiz       Quiz?        @relation(fields: [quizId], references: [id])
+  quizId     Int?         @db.UnsignedInt
+  QuizAnswer QuizAnswer[]
+}
+
+model QuizAnswer {
+  id           Int          @id @default(autoincrement()) @db.UnsignedInt
+  answer       AnswerType   @default(capital)
+  is_correct   Boolean
+  quizId       Int          @db.UnsignedInt
+  Quiz         Quiz         @relation(fields: [quizId], references: [id])
+  question_id  Int          @db.UnsignedInt
+  QuizQuestion QuizQuestion @relation(fields: [question_id], references: [id])
+
+  @@index([quizId], map: "idx_quizanswer_quiz_id")
+  @@index([question_id], map: "idx_quizanswer_question_id")
+}
+
+model Quiz {
+  id          Int            @id @default(autoincrement()) @db.UnsignedInt
+  name        String         @db.VarChar(255)
+  difficulty  Int            @db.UnsignedInt
+  theme       String         @db.VarChar(255)
+  description String         @db.VarChar(255)
+  questions   QuizQuestion[]
+  answers     QuizAnswer[]
+
+  created_at DateTime     @default(now()) @db.Timestamp(0)
+  updated_at DateTime?    @default(now()) @db.DateTime(0)
+  user_id    Int          @db.UnsignedInt
+  QuizResult QuizResult[]
+
+  @@index([name], map: "idx_quiz_name")
+}
+
+model QuizResult {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  quiz_id    Int      @db.UnsignedInt
+  user_id    Int      @db.UnsignedInt
+  result     Int      @db.UnsignedInt
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  quiz       Quiz     @relation(fields: [quiz_id], references: [id])
+
+  @@index([quiz_id], map: "idx_quizresult_quiz_id")
 }
 
 enum Language {
@@ -93,4 +146,15 @@ enum Score {
   succeeded
   medium
   failed
+}
+
+enum AnswerType {
+    capital
+    flag
+    population
+    free
+    continent
+    currency
+    official_name
+    region
 }

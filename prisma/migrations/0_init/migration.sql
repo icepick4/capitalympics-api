@@ -78,3 +78,4 @@ CREATE TABLE `QuestionResult` (
     INDEX `QuestionResult_country_id_idx`(`country_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
