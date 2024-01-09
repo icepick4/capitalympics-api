@@ -15,7 +15,7 @@ export const comparePasswords = async (
     return await bcrypt.compare(password, hashedPassword);
 };
 
-export const Languages = ['en', 'fr', 'es', 'it'] as const;
+export const Languages = ['en', 'fr', 'es', 'it', 'kr'] as const;
 export const DefaultLang = 'en' as const;
 export type Lang = (typeof Languages)[number];
 export const Continents = [
