@@ -82,6 +82,7 @@ enum Language {
   es
   it
   fr
+  ko
 }
 
 enum LearningType {
