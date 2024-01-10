@@ -25,8 +25,8 @@ export function calculateScore(
     medium_count: number,
     failed_count: number
 ): number {
-    let score: number = 0;
-    const total: number =
+    let score = 0;
+    const total =
         parseInt(succeeded_count.toString()) +
         parseInt(medium_count.toString()) +
         parseInt(failed_count.toString());
@@ -37,24 +37,21 @@ export function calculateScore(
     const succeeded_percentage = succeeded_count / total;
     const medium_percentage = medium_count / total;
     const failed_percentage = failed_count / total;
+    console.log(succeeded_percentage * 8);
 
-    // -- Weighted scores percentage -- //
-    const weighted_succeeded_percentage = Math.min(
-        succeeded_percentage * 6,
-        1.1
+   const weighted_succeeded_percentage = Math.min(
+    succeeded_percentage * 8, 
+    1.5 
     );
-    const weighted_medium_percentage = Math.min(medium_percentage * 2, 1);
-    const weighted_failed_percentage = failed_percentage * 4;
+    const weighted_medium_percentage = Math.min(medium_percentage * 3, 1.2); 
+    const weighted_failed_percentage = failed_percentage * 3; 
 
-    // -- Final score -- //
-    // The score is calculated with a logarithmic function to avoid
-    // achieving a high score with a few questions
     score = Math.round(
         ((weighted_succeeded_percentage * 100 -
-            weighted_medium_percentage * 10 -
+            weighted_medium_percentage * 15 - 
             weighted_failed_percentage * 25) *
             Math.log10(succeeded_count + 1)) /
-            1.625
+            1.5
     );
     // Score between 0 and 100
     return Math.floor(Math.max(0, Math.min(score, 100)));
