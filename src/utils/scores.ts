@@ -139,7 +139,6 @@ export function getPlayableCountryId(scores: UserScore[]): number {
     const cutOffIndex = Math.floor(scores.length * lowPartWeight);
     const firstHalf = scores.slice(0, cutOffIndex);
     const secondHalf = scores.slice(cutOffIndex, scores.length);
-    console.log(lowPartWeight);
     return Math.random() > lowPartWeight
         ? firstHalf[Math.floor(Math.random() * firstHalf.length)].country_id
         : secondHalf[Math.floor(Math.random() * secondHalf.length)].country_id;
