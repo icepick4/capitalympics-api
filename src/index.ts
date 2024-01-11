@@ -56,22 +56,4 @@ const startServer = (): void => {
     });
 };
 
-// const restartServer = (): void => {
-//     console.log('Restarting server...');
-//     startServer();
-// };
-
 startServer();
-
-// process.on('uncaughtException', (err: Error) => {
-//     console.error('Uncaught Exception:', err);
-//     restartServer();
-// });
-
-// process.on(
-//     'unhandledRejection',
-//     (reason: unknown, _promise: Promise<unknown>) => {
-//         console.error('Unhandled Rejection:', reason);
-//         restartServer();
-//     }
-// );

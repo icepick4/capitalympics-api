@@ -41,10 +41,10 @@ export function calculateScore(
 
     const weighted_succeeded_percentage = Math.min(
         succeeded_percentage * 8,
-        1.5
+        1.75
     );
     const weighted_medium_percentage = Math.min(medium_percentage * 3, 1.2);
-    const weighted_failed_percentage = failed_percentage * 3;
+    const weighted_failed_percentage = failed_percentage * 2;
 
     score = Math.round(
         ((weighted_succeeded_percentage * 100 -
