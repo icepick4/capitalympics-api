@@ -1,3 +1,4 @@
+import { first } from 'radash';
 import prisma from '../prisma';
 import { LearningType } from './common';
 
@@ -37,21 +38,20 @@ export function calculateScore(
     const succeeded_percentage = succeeded_count / total;
     const medium_percentage = medium_count / total;
     const failed_percentage = failed_count / total;
-    console.log(succeeded_percentage * 8);
 
-   const weighted_succeeded_percentage = Math.min(
-    succeeded_percentage * 8, 
-    1.5 
+    const weighted_succeeded_percentage = Math.min(
+        succeeded_percentage * 8,
+        1.5
     );
-    const weighted_medium_percentage = Math.min(medium_percentage * 3, 1.2); 
-    const weighted_failed_percentage = failed_percentage * 3; 
+    const weighted_medium_percentage = Math.min(medium_percentage * 3, 1.2);
+    const weighted_failed_percentage = failed_percentage * 3;
 
     score = Math.round(
         ((weighted_succeeded_percentage * 100 -
-            weighted_medium_percentage * 15 - 
+            weighted_medium_percentage * 15 -
             weighted_failed_percentage * 25) *
             Math.log10(succeeded_count + 1)) /
-            1.5
+        1.5
     );
     // Score between 0 and 100
     return Math.floor(Math.max(0, Math.min(score, 100)));
@@ -131,15 +131,16 @@ export function getPlayableCountryId(scores: UserScore[]): number {
         if (a.score === undefined || b.score === undefined) {
             return 0;
         }
-        return a.score - b.score;
+        return b.score - a.score;
     });
-    const lowPartWeight = 0.8;
-    const half = Math.ceil(scores.length / 2);
-    const firstHalf = scores.slice(0, half);
-    const secondHalf = scores.slice(half, scores.length);
-    const random = Math.random();
 
-    return random < lowPartWeight
+    const numberOfSteps = Math.floor(scores.length / 200);
+    const lowPartWeight = Math.min(0.8, Math.max(0.2, 0.2 + numberOfSteps * 0.1));
+    const cutOffIndex = Math.floor(scores.length * lowPartWeight);
+    const firstHalf = scores.slice(0, cutOffIndex);
+    const secondHalf = scores.slice(cutOffIndex, scores.length);
+    console.log(lowPartWeight);
+    return Math.random() > lowPartWeight
         ? firstHalf[Math.floor(Math.random() * firstHalf.length)].country_id
         : secondHalf[Math.floor(Math.random() * secondHalf.length)].country_id;
 }
