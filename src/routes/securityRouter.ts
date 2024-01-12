@@ -194,14 +194,14 @@ securityRouter.get(
             lon: number;
         }
 
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const ip = req.ip || req.socket.remoteAddress;
+        console.log(ip);
         if (ip === undefined){
             return res.status(404).json({
                 success: false
             })
         }
         try{        
-            console.log(ip);
             const response = await fetch(`http://ip-api.com/json/${ip}`);
             const data = await (response.json() as Promise<IpAPI>);
             const result: IpAPI & {success: boolean} = {
