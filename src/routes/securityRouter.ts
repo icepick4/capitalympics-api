@@ -201,6 +201,7 @@ securityRouter.get(
             })
         }
         try{        
+            console.log(ip);
             const response = await fetch(`http://ip-api.com/json/${ip}`);
             const data = await (response.json() as Promise<IpAPI>);
             const result: IpAPI & {success: boolean} = {
