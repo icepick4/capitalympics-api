@@ -15,11 +15,12 @@ RUN npm run build
 
 ENV PORT=${PORT}
 ENV DATABASE_URL=${DATABASE_URL}
-ENV DOWNLOAD_FOLDER=${DOWNLOAD_FOLDER}
 ENV JWT_TOKEN=${JWT_TOKEN}
 ENV NODE_ENV=production
 
 FROM node:18-alpine
+
+WORKDIR /app
 
 COPY --from=builder /app/.env ./.env
 COPY --from=builder /app/node_modules ./node_modules

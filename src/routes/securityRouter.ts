@@ -203,13 +203,14 @@ securityRouter.get(
         try{        
             const response = await fetch(`http://ip-api.com/json/${ip}`);
             const data = await (response.json() as Promise<IpAPI>);
-            return res.status(200).json({
+            const result: IpAPI & {success: boolean} = {
                 success: true,
-                long: data.lon,
+                lon: data.lon,
                 lat: data.lat,
                 country: data.country,
-                city: data.country
-            })
+                city: data.city
+            }
+            return res.status(200).json(result);
         }
         catch {
             return res.status(406).json({
