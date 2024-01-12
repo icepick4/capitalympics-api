@@ -184,4 +184,21 @@ securityRouter.patch(
     }
 );
 
+securityRouter.get(
+    '/ip',
+    async (req: Request, res: Response) => {
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        if (ip === undefined){
+            return res.status(404).json({
+                success: false,
+                ip
+            })
+        }
+        return res.status(200).json({
+            success: true,
+            ip
+        })
+    }
+);
+
 export default securityRouter;
