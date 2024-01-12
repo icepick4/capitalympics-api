@@ -187,17 +187,35 @@ securityRouter.patch(
 securityRouter.get(
     '/ip',
     async (req: Request, res: Response) => {
+        type IpAPI = {
+            country: string;
+            city: string;
+            lat: number
+            lon: number;
+        }
+
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         if (ip === undefined){
             return res.status(404).json({
-                success: false,
-                ip
+                success: false
             })
         }
-        return res.status(200).json({
-            success: true,
-            ip
-        })
+        try{        
+            const response = await fetch(`http://ip-api.com/json/${ip}`);
+            const data = await (response.json() as Promise<IpAPI>);
+            return res.status(200).json({
+                success: true,
+                long: data.lon,
+                lat: data.lat,
+                country: data.country,
+                city: data.country
+            })
+        }
+        catch {
+            return res.status(406).json({
+                success: false
+            })
+        }
     }
 );
 
