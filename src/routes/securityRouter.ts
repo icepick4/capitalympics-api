@@ -195,13 +195,13 @@ securityRouter.get(
         }
 
         const ip = req.ip || req.socket.remoteAddress;
-        console.log(ip);
+        console.log(JSON.stringify(ip));
         if (ip === undefined){
             return res.status(404).json({
                 success: false
             })
         }
-        try{        
+        try{
             const response = await fetch(`http://ip-api.com/json/${ip}`);
             const data = await (response.json() as Promise<IpAPI>);
             const result: IpAPI & {success: boolean} = {
