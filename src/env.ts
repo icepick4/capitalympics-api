@@ -5,7 +5,6 @@ dotenv.config();
 const envVariablesSchema = z.object({
     DATABASE_URL: z.string(),
     JWT_TOKEN: z.string().nonempty(),
-    DOWNLOAD_FOLDER: z.string().nonempty(),
     PORT: z
         .string()
         .transform(Number)
