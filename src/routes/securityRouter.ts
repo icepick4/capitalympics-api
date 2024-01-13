@@ -203,10 +203,8 @@ securityRouter.get('/ip', async (req: Request, res: Response) => {
         lon: number;
     };
 
-    console.log(req.headers);
+    const ip = req.headers['x-real-ip'] || req.headers['x-forwarded-for'];
 
-    const ip = req.ip || req.socket.remoteAddress;
-    console.log(JSON.stringify(ip));
     if (ip === undefined) {
         return res.status(404).json({
             success: false
