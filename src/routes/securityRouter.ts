@@ -1,5 +1,11 @@
 import express, { Request, Response } from 'express';
-import { JsonWebTokenError, JwtPayload, TokenExpiredError, sign, verify } from 'jsonwebtoken';
+import {
+    JsonWebTokenError,
+    JwtPayload,
+    TokenExpiredError,
+    sign,
+    verify
+} from 'jsonwebtoken';
 import { DateTime } from 'luxon';
 import { omit, pick } from 'radash';
 import { z } from 'zod';
@@ -64,7 +70,10 @@ securityRouter.post(
         const tokenFromHeader = result.data[HEADER_NAME].split(' ')[1];
 
         try {
-            const payload = verify(tokenFromHeader, ENV.JWT_TOKEN) as JwtPayload;
+            const payload = verify(
+                tokenFromHeader,
+                ENV.JWT_TOKEN
+            ) as JwtPayload;
             delete payload.iat;
             delete payload.exp;
             delete payload.nbf;
@@ -73,7 +82,9 @@ securityRouter.post(
             const token = sign(payload, ENV.JWT_TOKEN, { expiresIn: '2h' });
             request.app.set('auth', payload);
 
-            return response.status(200).json({ success: true, data: { token } });;
+            return response
+                .status(200)
+                .json({ success: true, data: { token } });
         } catch (err) {
             const error = err as JsonWebTokenError | TokenExpiredError;
             const code =
@@ -184,41 +195,39 @@ securityRouter.patch(
     }
 );
 
-securityRouter.get(
-    '/ip',
-    async (req: Request, res: Response) => {
-        type IpAPI = {
-            country: string;
-            city: string;
-            lat: number
-            lon: number;
-        }
+securityRouter.get('/ip', async (req: Request, res: Response) => {
+    type IpAPI = {
+        country: string;
+        city: string;
+        lat: number;
+        lon: number;
+    };
 
-        const ip = req.ip || req.socket.remoteAddress;
-        console.log(JSON.stringify(ip));
-        if (ip === undefined){
-            return res.status(404).json({
-                success: false
-            })
-        }
-        try{
-            const response = await fetch(`http://ip-api.com/json/${ip}`);
-            const data = await (response.json() as Promise<IpAPI>);
-            const result: IpAPI & {success: boolean} = {
-                success: true,
-                lon: data.lon,
-                lat: data.lat,
-                country: data.country,
-                city: data.city
-            }
-            return res.status(200).json(result);
-        }
-        catch {
-            return res.status(406).json({
-                success: false
-            })
-        }
+    console.log(req.headers);
+
+    const ip = req.ip || req.socket.remoteAddress;
+    console.log(JSON.stringify(ip));
+    if (ip === undefined) {
+        return res.status(404).json({
+            success: false
+        });
     }
-);
+    try {
+        const response = await fetch(`http://ip-api.com/json/${ip}`);
+        const data = await (response.json() as Promise<IpAPI>);
+        const result: IpAPI & { success: boolean } = {
+            success: true,
+            lon: data.lon,
+            lat: data.lat,
+            country: data.country,
+            city: data.city
+        };
+        return res.status(200).json(result);
+    } catch {
+        return res.status(406).json({
+            success: false
+        });
+    }
+});
 
 export default securityRouter;
