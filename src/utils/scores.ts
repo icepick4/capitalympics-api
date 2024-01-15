@@ -1,4 +1,3 @@
-import { first } from 'radash';
 import prisma from '../prisma';
 import { LearningType } from './common';
 
@@ -51,7 +50,7 @@ export function calculateScore(
             weighted_medium_percentage * 15 -
             weighted_failed_percentage * 25) *
             Math.log10(succeeded_count + 1)) /
-        1.5
+            1.5
     );
     // Score between 0 and 100
     return Math.floor(Math.max(0, Math.min(score, 100)));
@@ -123,6 +122,10 @@ export async function getUserResultsCounters(
 }
 
 export function getPlayableCountryId(scores: UserScore[]): number {
+    const totalAnswers = scores.reduce(
+        (acc, s) => acc + s.succeeded + s.medium + s.failed,
+        0
+    );
     scores.map(
         (s) => (s.score = calculateScore(s.succeeded, s.medium, s.failed))
     );
@@ -133,13 +136,16 @@ export function getPlayableCountryId(scores: UserScore[]): number {
         }
         return b.score - a.score;
     });
-
-    const numberOfSteps = Math.floor(scores.length / 200);
-    const lowPartWeight = Math.min(0.8, Math.max(0.2, 0.2 + numberOfSteps * 0.1));
+    const numberOfSteps = Math.floor(totalAnswers / 150);
+    const lowPartWeight = Math.min(
+        0.8,
+        Math.max(0.2, 0.2 + numberOfSteps * 0.1)
+    );
     const cutOffIndex = Math.floor(scores.length * lowPartWeight);
     const firstHalf = scores.slice(0, cutOffIndex);
     const secondHalf = scores.slice(cutOffIndex, scores.length);
-    return Math.random() > lowPartWeight
+    const random = Math.random();
+    return random > lowPartWeight
         ? firstHalf[Math.floor(Math.random() * firstHalf.length)].country_id
         : secondHalf[Math.floor(Math.random() * secondHalf.length)].country_id;
 }
