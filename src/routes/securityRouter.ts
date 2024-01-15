@@ -198,7 +198,7 @@ securityRouter.patch(
 securityRouter.get('/ip', async (req: Request, res: Response) => {
     type IpAPI = {
         country: string;
-        city: string;
+        regionName: string;
         lat: number;
         lon: number;
     };
@@ -206,7 +206,7 @@ securityRouter.get('/ip', async (req: Request, res: Response) => {
     const ip = req.headers['x-real-ip'] || req.headers['x-forwarded-for'];
 
     if (ip === undefined) {
-        return res.status(404).json({
+        return res.status(406).json({
             success: false
         });
     }
@@ -218,7 +218,7 @@ securityRouter.get('/ip', async (req: Request, res: Response) => {
             lon: data.lon,
             lat: data.lat,
             country: data.country,
-            city: data.city
+            regionName: data.regionName
         };
         return res.status(200).json(result);
     } catch {
