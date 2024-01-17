@@ -1,7 +1,7 @@
 export interface User {
     id: number;
     name: string;
-    image: string;
+    avatar: Avatar;
     password: string;
     flag_score: number;
     capital_score: number;
@@ -9,6 +9,15 @@ export interface User {
     created_at: string;
     language: string;
 }
+
+export type Avatar = {
+    mouth: number;
+    eyes: number;
+    hair: number;
+    nose: number;
+    skin: string;
+    clothes: string;
+};
 
 export interface UserScore {
     user_id: number;

@@ -22,6 +22,28 @@ async function truncate(...tables: string[]) {
 }
 
 async function main() {
+    // const avatarData = {
+    //     mouth: 1,
+    //     eyes: 1,
+    //     hair: 1,
+    //     nose: 1,
+    //     skin: '#ffffff',
+    //     clothes: '#000000'
+    // };
+    // const userIds = [
+    //     2, 3, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+    //     27, 28, 29, 30, 31, 32, 33, 34, 35, 37, 38, 39, 49
+    // ];
+    // for (const userId of userIds) {
+    //     await prisma.avatar.create({
+    //         data: {
+    //             ...avatarData,
+    //             user: {
+    //                 connect: { id: userId }
+    //             }
+    //         }
+    //     });
+    // }
     // Truncate Continent
     await truncate(
         'Region',

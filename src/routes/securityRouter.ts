@@ -110,6 +110,9 @@ securityRouter.get(
         const user = await prisma.user.findUnique({
             where: {
                 id: authData.id
+            },
+            include: {
+                avatar: true
             }
         });
 
@@ -194,6 +197,41 @@ securityRouter.patch(
         });
     }
 );
+
+securityRouter.patch('/me/avatar', AuthMiddleware, async (req, res) => {
+    const bodySchema = z.object({
+        avatar: z.object({
+            mouth: z.number().min(0).max(6),
+            eyes: z.number().min(0).max(5),
+            hair: z.number().min(0).max(19),
+            nose: z.number().min(0).max(2),
+            skin: z.string().min(7).max(7),
+            clothes: z.string().min(7).max(7)
+        })
+    });
+
+    const result = bodySchema.safeParse(req.body);
+
+    if (!result.success) {
+        return res.status(406).json({ success: false, error: result.error });
+    }
+
+    const updatedUser = await prisma.user.update({
+        where: {
+            id: req.app.get('auth').id
+        },
+        data: {
+            avatar: {
+                update: result.data.avatar
+            }
+        }
+    });
+
+    return res.status(200).json({
+        success: true,
+        user: updatedUser
+    });
+});
 
 securityRouter.get('/ip', async (req: Request, res: Response) => {
     type IpAPI = {
