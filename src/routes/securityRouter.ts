@@ -224,6 +224,9 @@ securityRouter.patch('/me/avatar', AuthMiddleware, async (req, res) => {
             avatar: {
                 update: result.data.avatar
             }
+        },
+        select: {
+            avatar: true
         }
     });
 
