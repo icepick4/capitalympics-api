@@ -12,7 +12,12 @@ import { z } from 'zod';
 import { ENV } from '../env';
 import prisma from '../prisma';
 import { AuthMiddleware } from '../utils/authMiddlewares';
-import { DefaultLang, Languages, comparePasswords } from '../utils/common';
+import {
+    DefaultLang,
+    Languages,
+    comparePasswords,
+    hashPassword
+} from '../utils/common';
 
 const securityRouter = express.Router();
 
@@ -197,6 +202,50 @@ securityRouter.patch(
         });
     }
 );
+
+securityRouter.patch('/me/password', AuthMiddleware, async (req, res) => {
+    const bodySchema = z.object({
+        oldPassword: z.string(),
+        newPassword: z.string().min(8).max(20)
+    });
+
+    const result = bodySchema.safeParse(req.body);
+    if (!result.success) {
+        return res.status(406).json({ success: false, error: result.error });
+    }
+
+    const user = await prisma.user.findUnique({
+        where: {
+            id: req.app.get('auth').id
+        }
+    });
+
+    if (!user) {
+        return res
+            .status(404)
+            .json({ success: false, error: 'User not found' });
+    }
+
+    if (!(await comparePasswords(result.data.oldPassword, user.password))) {
+        return res
+            .status(401)
+            .json({ success: false, error: 'Invalid credentials' });
+    }
+
+    const updatedUser = await prisma.user.update({
+        where: {
+            id: req.app.get('auth').id
+        },
+        data: {
+            password: await hashPassword(result.data.newPassword)
+        }
+    });
+
+    return res.status(200).json({
+        success: true,
+        user: omit(updatedUser, ['password'])
+    });
+});
 
 securityRouter.patch('/me/avatar', AuthMiddleware, async (req, res) => {
     const bodySchema = z.object({
