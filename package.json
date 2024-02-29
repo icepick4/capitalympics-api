@@ -5,6 +5,7 @@
     "main": "index.js",
     "scripts": {
         "build": "npx prisma generate && tsc",
+        "vercel-build": "echo Hello",
         "start": "node dist/src/index.js",
         "dev": "nodemon src/index.ts",
         "seed": "ts-node prisma/seed.ts",
