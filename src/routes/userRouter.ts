@@ -48,6 +48,26 @@ userRouter.post('/', async (req: Request, res: Response) => {
         }
     });
 
+    const avatarData = {
+        mouth: 1,
+        eyes: 1,
+        hair: 1,
+        nose: 1,
+        skin: '#ffffff',
+        clothes: '#000000'
+    };
+
+    await prisma.avatar.create({
+        data: {
+            ...avatarData,
+            user: {
+                connect: {
+                    id: newUser.id
+                }
+            },
+        }
+    })
+
     return res.status(200).json({ success: true, user: newUser });
 });
 
